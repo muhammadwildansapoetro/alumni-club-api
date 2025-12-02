@@ -1,4 +1,4 @@
-# ftip-alumni-club-api
+# alumni-club-api
 
 To install dependencies:
 
