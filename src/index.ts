@@ -4,6 +4,7 @@ dotenv.config();
 import express from "express";
 import type { Application, Request, Response } from "express";
 import cors from "cors";
+import authRouter from "./routers/auth.router";
 
 const PORT: number = 8000;
 const app: Application = express();
@@ -13,12 +14,14 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: process.env.BASE_URL_FE!,
+    origin: process.env.BASE_URL_FE,
     credentials: true,
     allowedHeaders: ["Authorization", "Content-Type"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
 );
+
+app.use("/auth", authRouter);
 
 app.get("/api", (req: Request, res: Response) => {
   res.status(200).send(`Connected to ${process.env.APP_NAME} API`);

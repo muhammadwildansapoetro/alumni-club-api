@@ -1,69 +1,143 @@
 generator client {
   provider      = "prisma-client-js"
-  output        = "./generated/client"
   binaryTargets = ["native", "darwin-arm64", "windows"]
 }
 
 datasource db {
   provider = "postgresql"
+   url      = env("DATABASE_URL")
 }
 
-enum Role {
+// ------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------
+
+enum UserRole {
   USER
   ADMIN
 }
 
-enum Major {
+enum Department {
   TEP
   TPN
   TIN
 }
 
-enum EmploymentType {
-  EMPLOYED
-  ENTREPRENEUR
-}
-
-enum SalaryRange {
-  LOW
-  MID
-  HIGH
-}
-
-enum WorkIndustry {
-  IT
-  FOOD
-  MANUFACTURE
-  FINANCE
-  EDUCATION
+enum EmploymentLevel {
+  INTERN
+  STAFF
+  SUPERVISOR
+  MANAGER
+  SENIOR_MANAGER
+  DIRECTOR
+  VP
+  C_LEVEL
+  FOUNDER
   OTHER
 }
 
-model Alumni {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
+enum IncomeRange {
+  BELOW_5M
+  RANGE_5_10M
+  RANGE_10_20M
+  ABOVE_20M
+  UNKNOWN
+}
+
+// could be improved later
+enum IndustryField {
+  AGRICULTURE
+  FOOD_TECH
+  BIOTECH
+  RESEARCH
+  EDUCATION
+  ENGINEERING
+  BUSINESS
+  MARKETING
+  FINANCE
+  GOVERNMENT
+  FREELANCE
+  OTHER
+}
+
+// ------------------------------------------------------
+// USER (Auth base)
+// ------------------------------------------------------
+
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  name     String?
   password String
-  role     Role   @default(USER)
+  role     UserRole @default(USER)
 
-  name    String
-  phone   String?
-  address String?
+  profile       AlumniProfile?
+  jobPostings   JobPosting[]
+  businessPosts BusinessPosting[]
 
-  class_year      Int?
-  graduation_year Int?
-  major           Major?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-  job_title       String?
-  company         String?
-  work_location   String?
-  work_industry   String?
-  salary_range    String?
-  employment_type EmploymentType?
+// ------------------------------------------------------
+// ALUMNI PROFILE (Main Data)
+// ------------------------------------------------------
 
-  linkedin_link String?
+model AlumniProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
-  is_active  Boolean @default(true)
-  is_deleted Boolean @default(false)
+  fullName   String
+  department Department
+  classYear  Int
+  city       String?
+
+  industry        IndustryField?
+  employmentLevel EmploymentLevel?
+  incomeRange     IncomeRange?
+  jobTitle        String?
+  companyName     String?
+
+  linkedInUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// JOB POSTING
+// ------------------------------------------------------
+
+model JobPosting {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  title       String
+  description String
+  company     String?
+  externalUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// BUSINESS / SHOP MODULE
+// ------------------------------------------------------
+
+model BusinessPosting {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  businessName   String
+  description    String
+  productName    String?
+  priceStartFrom Int?
+  externalUrl    String?
+  contactInfo    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
