@@ -1,0 +1,70 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./generated/client"
+  binaryTargets = ["native", "darwin-arm64", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Major {
+  TEP
+  TPN
+  TIN
+}
+
+enum EmploymentType {
+  EMPLOYED
+  ENTREPRENEUR
+}
+
+enum SalaryRange {
+  LOW
+  MID
+  HIGH
+}
+
+enum WorkIndustry {
+  IT
+  FOOD
+  MANUFACTURE
+  FINANCE
+  EDUCATION
+  OTHER
+}
+
+model Alumni {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  name    String
+  phone   String?
+  address String?
+
+  class_year      Int?
+  graduation_year Int?
+  major           Major?
+
+  job_title       String?
+  company         String?
+  work_location   String?
+  work_industry   String?
+  salary_range    String?
+  employment_type EmploymentType?
+
+  linkedin_link String?
+
+  is_active  Boolean @default(true)
+  is_deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
