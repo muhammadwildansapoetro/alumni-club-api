@@ -17,5 +17,10 @@ export const loginSchema = z.object({
     .min(8, "Password minimal 8 karakter"),
 });
 
+export const googleAuthSchema = z.object({
+  token: z.string().min(1, "Google token wajib diisi"),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;

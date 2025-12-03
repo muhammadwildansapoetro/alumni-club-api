@@ -11,7 +11,12 @@ export const registerService = async (data: RegisterInput) => {
     where: { email: data.email },
   });
 
-  if (existing) throw new Error("Email already registered");
+  if (existing) {
+    if (existing.authProvider === 'GOOGLE') {
+      throw new Error("Email sudah terdaftar dengan Google. Silakan login dengan Google.");
+    }
+    throw new Error("Email sudah terdaftar");
+  }
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -20,6 +25,7 @@ export const registerService = async (data: RegisterInput) => {
       email: data.email,
       name: data.name,
       password: hashedPassword,
+      authProvider: 'EMAIL',
       role: "USER",
     },
   });
@@ -32,11 +38,19 @@ export const loginService = async (data: LoginInput) => {
     where: { email: data.email },
   });
 
-  if (!user) throw new Error("Invalid email or password");
+  if (!user) throw new Error("Email atau password salah");
 
-  const passwordMatch = await bcrypt.compare(data.password, user.password!);
+  if (user.authProvider === 'GOOGLE') {
+    throw new Error("Email ini terdaftar dengan Google. Silakan login dengan Google.");
+  }
 
-  if (!passwordMatch) throw new Error("Invalid email or password");
+  if (!user.password) {
+    throw new Error("Password tidak ditemukan. Silakan login dengan Google.");
+  }
+
+  const passwordMatch = await bcrypt.compare(data.password, user.password);
+
+  if (!passwordMatch) throw new Error("Email atau password salah");
 
   const token = jwt.sign(
     {
