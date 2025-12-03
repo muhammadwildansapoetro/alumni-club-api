@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Department enum matching the Prisma schema
 const DepartmentEnum = z.enum(["TEP", "TPN", "TIN"], {
-  errorMap: (issue, ctx) => ({ message: "Jurusan harus salah satu dari: TEP, TPN, atau TIN" }),
+  message: "Jurusan harus salah satu dari: TEP, TPN, atau TIN"
 });
 
 export const registerSchema = z.object({
