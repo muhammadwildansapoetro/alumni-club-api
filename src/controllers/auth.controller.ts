@@ -10,18 +10,26 @@ import {
 export const registerController = async (req: Request, res: Response) => {
   try {
     const body = registerSchema.parse(req.body);
-    const user = await registerService(body);
+    const result = await registerService(body);
 
     return res.status(201).json({
       success: true,
-      message: "Pendaftaran berhasil",
+      message: "Pendaftaran alumni berhasil! Selamat bergabung dengan FTIP Unpad Alumni Club.",
       data: {
         user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          createdAt: user.createdAt
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          role: result.user.role,
+          authProvider: result.user.authProvider,
+          createdAt: result.user.createdAt
+        },
+        alumniProfile: {
+          id: result.alumniProfile.id,
+          fullName: result.alumniProfile.fullName,
+          department: result.alumniProfile.department,
+          classYear: result.alumniProfile.classYear,
+          createdAt: result.alumniProfile.createdAt
         }
       }
     });
@@ -49,14 +57,24 @@ export const loginController = async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      message: "Login berhasil",
+      message: "Login berhasil! Selamat datang kembali.",
       data: {
         user: {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          authProvider: user.authProvider
+          authProvider: user.authProvider,
+          profile: user.profile ? {
+            fullName: user.profile.fullName,
+            department: user.profile.department,
+            classYear: user.profile.classYear,
+            city: user.profile.city,
+            industry: user.profile.industry,
+            employmentLevel: user.profile.employmentLevel,
+            jobTitle: user.profile.jobTitle,
+            companyName: user.profile.companyName
+          } : null
         },
         token,
         expiresIn: "7d"

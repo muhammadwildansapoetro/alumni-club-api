@@ -20,22 +20,41 @@ export const registerService = async (data: RegisterInput) => {
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      email: data.email,
-      name: data.name,
-      password: hashedPassword,
-      authProvider: 'EMAIL',
-      role: "USER",
-    },
+  // Create User and AlumniProfile in a transaction
+  const result = await prisma.$transaction(async (tx) => {
+    // Create User first
+    const user = await tx.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        password: hashedPassword,
+        authProvider: 'EMAIL',
+        role: "USER",
+      },
+    });
+
+    // Create AlumniProfile
+    const alumniProfile = await tx.alumniProfile.create({
+      data: {
+        userId: user.id,
+        fullName: data.name,
+        department: data.department,
+        classYear: data.classYear,
+      },
+    });
+
+    return { user, alumniProfile };
   });
 
-  return user;
+  return result;
 };
 
 export const loginService = async (data: LoginInput) => {
   const user = await prisma.user.findUnique({
     where: { email: data.email },
+    include: {
+      profile: true
+    }
   });
 
   if (!user) throw new Error("Email atau password salah");
