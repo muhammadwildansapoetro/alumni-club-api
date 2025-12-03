@@ -5,6 +5,7 @@ import express from "express";
 import type { Application, Request, Response } from "express";
 import cors from "cors";
 import authRouter from "./routers/auth.router";
+import userRouter from "./routers/user.routes.js";
 
 const PORT: number = 8000;
 const app: Application = express();
@@ -22,6 +23,7 @@ app.use(
 );
 
 app.use("/auth", authRouter);
+app.use("/users", userRouter);
 
 app.get("/api", (req: Request, res: Response) => {
   res.status(200).send(`Connected to ${process.env.APP_NAME} API`);

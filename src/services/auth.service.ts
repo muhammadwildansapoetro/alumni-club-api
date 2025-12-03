@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { RegisterInput, LoginInput } from "../types/auth.types.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
+const JWT_SECRET = process.env.JWT_SECRET || "";
 const JWT_EXPIRES = "7d";
 
 export const registerService = async (data: RegisterInput) => {
@@ -12,8 +12,10 @@ export const registerService = async (data: RegisterInput) => {
   });
 
   if (existing) {
-    if (existing.authProvider === 'GOOGLE') {
-      throw new Error("Email sudah terdaftar dengan Google. Silakan login dengan Google.");
+    if (existing.authProvider === "GOOGLE") {
+      throw new Error(
+        "Email sudah terdaftar dengan Google. Silakan login dengan Google."
+      );
     }
     throw new Error("Email sudah terdaftar");
   }
@@ -28,7 +30,7 @@ export const registerService = async (data: RegisterInput) => {
         email: data.email,
         name: data.name,
         password: hashedPassword,
-        authProvider: 'EMAIL',
+        authProvider: "EMAIL",
         role: "USER",
       },
     });
@@ -53,14 +55,16 @@ export const loginService = async (data: LoginInput) => {
   const user = await prisma.user.findUnique({
     where: { email: data.email },
     include: {
-      profile: true
-    }
+      profile: true,
+    },
   });
 
   if (!user) throw new Error("Email atau password salah");
 
-  if (user.authProvider === 'GOOGLE') {
-    throw new Error("Email ini terdaftar dengan Google. Silakan login dengan Google.");
+  if (user.authProvider === "GOOGLE") {
+    throw new Error(
+      "Email ini terdaftar dengan Google. Silakan login dengan Google."
+    );
   }
 
   if (!user.password) {

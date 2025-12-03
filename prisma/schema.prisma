@@ -78,6 +78,7 @@ model User {
   avatar        String?
   authProvider  AuthProvider  @default(EMAIL)
   role          UserRole      @default(USER)
+  deletedAt     DateTime?
 
   profile       AlumniProfile?
   jobPostings   JobPosting[]
