@@ -3,11 +3,15 @@ import type { ApiResponse } from "../types/express.types.js";
 import type { z } from "zod";
 
 // Generic validation middleware
-export const validateRequest = (schema: z.ZodSchema) => {
+export const validateRequest = (schema: z.ZodSchema, source: 'body' | 'query' = 'body') => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validate the request body
-      schema.parse(req.body);
+      // Validate based on source
+      if (source === 'query') {
+        schema.parse(req.query);
+      } else {
+        schema.parse(req.body);
+      }
       next();
     } catch (error: any) {
       if (error.issues) {

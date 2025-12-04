@@ -8,9 +8,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// ------------------------------------------------------
 // ENUMS
-// ------------------------------------------------------
 
 enum UserRole {
   USER
@@ -65,9 +63,7 @@ enum IndustryField {
   OTHER
 }
 
-// ------------------------------------------------------
 // USER (Auth base)
-// ------------------------------------------------------
 
 model User {
   id           String       @id @default(cuid())
@@ -81,15 +77,13 @@ model User {
 
   profile       AlumniProfile?
   jobPostings   JobPosting[]
-  businessPosts BusinessPosting[]
+  businessListings BusinessDirectory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// ------------------------------------------------------
 // ALUMNI PROFILE (Main Data)
-// ------------------------------------------------------
 
 model AlumniProfile {
   id     String @id @default(cuid())
@@ -113,39 +107,40 @@ model AlumniProfile {
   updatedAt DateTime @updatedAt
 }
 
-// ------------------------------------------------------
 // JOB POSTING
-// ------------------------------------------------------
 
 model JobPosting {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  id          String @id @default(cuid())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id])
 
   title       String
   description String
   company     String?
+  location    String?
+  jobType     String?      // remote, hybrid, onsite
+  salaryRange String?
   externalUrl String?
+  isActive    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// ------------------------------------------------------
-// BUSINESS / SHOP MODULE
-// ------------------------------------------------------
+// BUSINESS DIRECTORY
 
-model BusinessPosting {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+model BusinessDirectory {
+  id          String @id @default(cuid())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id])
 
-  businessName   String
-  description    String
-  productName    String?
-  priceStartFrom Int?
-  externalUrl    String?
-  contactInfo    String?
+  businessName String
+  description  String
+  category     String?
+  location     String?
+  website      String?
+  contactInfo  String?
+  isActive     Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
