@@ -16,7 +16,7 @@ export const registerSchema = z.object({
   classYear: z
     .number()
     .int("Tahun angkatan harus berupa angka bulat")
-    .min(1960, "Tahun angkatan tidak valid")
+    .min(1957, "Tahun angkatan tidak valid")
     .max(new Date().getFullYear(), "Tahun angkatan tidak boleh melebihi tahun ini"),
 });
 

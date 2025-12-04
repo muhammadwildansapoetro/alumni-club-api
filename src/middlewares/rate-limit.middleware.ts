@@ -14,11 +14,11 @@ export const generalRateLimit = rateLimit({
 
 // Strict rate limiting for authentication endpoints
 export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 auth requests per windowMs
+  windowMs: 5 * 60 * 1000, // 5 minutes instead of 15
+  max: 15, // 15 attempts instead of 5
   message: {
     success: false,
-    error: "Terlalu banyak percobaan masuk, silakan coba lagi dalam 15 menit",
+    error: "Terlalu banyak percobaan, silakan coba lagi dalam 5 menit",
   },
   standardHeaders: true,
   legacyHeaders: false,
