@@ -15,12 +15,15 @@ import {
   importAlumniFromCSVController,
   validateCSVTemplateController,
 } from "../controllers/user.controller.js";
-import { uploadCSVSingle, handleUploadError } from "../middlewares/upload.middleware.js";
+import {
+  uploadCSVSingle,
+  handleUploadError,
+} from "../middlewares/upload.middleware.js";
 
 const router = Router();
 
 // Public routes (but need authentication)
-router.use(authMiddleware); // Semua routes di bawah butuh auth
+router.use(authMiddleware);
 
 // Alumni directory - semua user bisa akses
 router.get("/directory", getAlumniDirectoryController);
@@ -35,8 +38,18 @@ router.use("/admin", adminMiddleware);
 router.get("/admin/list", getAllUsersController);
 router.get("/admin/deleted", getDeletedUsersController);
 router.post("/admin/create", createUserController);
-router.post("/admin/import", uploadCSVSingle, handleUploadError, importAlumniFromCSVController);
-router.post("/admin/validate-csv", uploadCSVSingle, handleUploadError, validateCSVTemplateController);
+router.post(
+  "/admin/import",
+  uploadCSVSingle,
+  handleUploadError,
+  importAlumniFromCSVController
+);
+router.post(
+  "/admin/validate-csv",
+  uploadCSVSingle,
+  handleUploadError,
+  validateCSVTemplateController
+);
 
 // Role management (admin only)
 router.put("/:id/role", adminMiddleware, updateUserRoleController);

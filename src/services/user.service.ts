@@ -1,8 +1,8 @@
-import prisma from "../prisma.js";
+import { prisma } from "../lib/prisma.ts";
 import bcrypt from "bcryptjs";
 import csv from "csv-parser";
 import fs from "fs";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "../../generated/prisma/index.js";
 
 // Interface untuk CSV import
 interface AlumniCSVRow {

@@ -4,7 +4,7 @@ import { registerSchema, loginSchema } from "../types/auth.types.js";
 import {
   ConflictError,
   UnauthorizedError,
-  handleAuthError
+  handleAuthError,
 } from "../utils/errors.js";
 
 export const registerController = async (req: Request, res: Response) => {
@@ -14,7 +14,8 @@ export const registerController = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       success: true,
-      message: "Pendaftaran alumni berhasil! Selamat bergabung dengan FTIP Unpad Alumni Club.",
+      message:
+        "Pendaftaran alumni berhasil! Selamat bergabung dengan FTIP Unpad Alumni Club.",
       data: {
         user: {
           id: result.user.id,
@@ -22,23 +23,23 @@ export const registerController = async (req: Request, res: Response) => {
           name: result.user.name,
           role: result.user.role,
           authProvider: result.user.authProvider,
-          createdAt: result.user.createdAt
+          createdAt: result.user.createdAt,
         },
         alumniProfile: {
           id: result.alumniProfile.id,
           fullName: result.alumniProfile.fullName,
           department: result.alumniProfile.department,
           classYear: result.alumniProfile.classYear,
-          createdAt: result.alumniProfile.createdAt
-        }
-      }
+          createdAt: result.alumniProfile.createdAt,
+        },
+      },
     });
   } catch (err: any) {
-    if (err.name === 'ZodError') {
+    if (err.name === "ZodError") {
       return res.status(400).json({
         success: false,
         error: "Input tidak valid",
-        details: err.errors
+        details: err.errors,
       });
     }
 
@@ -65,31 +66,36 @@ export const loginController = async (req: Request, res: Response) => {
           name: user.name,
           role: user.role,
           authProvider: user.authProvider,
-          profile: user.profile ? {
-            fullName: user.profile.fullName,
-            department: user.profile.department,
-            classYear: user.profile.classYear,
-            city: user.profile.city,
-            industry: user.profile.industry,
-            employmentLevel: user.profile.employmentLevel,
-            jobTitle: user.profile.jobTitle,
-            companyName: user.profile.companyName
-          } : null
+          profile: user.profile
+            ? {
+                fullName: user.profile.fullName,
+                department: user.profile.department,
+                classYear: user.profile.classYear,
+                city: user.profile.city,
+                industry: user.profile.industry,
+                employmentLevel: user.profile.employmentLevel,
+                jobTitle: user.profile.jobTitle,
+                companyName: user.profile.companyName,
+              }
+            : null,
         },
         token,
-        expiresIn: "7d"
-      }
+        expiresIn: "1d",
+      },
     });
   } catch (err: any) {
-    if (err.name === 'ZodError') {
+    if (err.name === "ZodError") {
       return res.status(400).json({
         success: false,
         error: "Input tidak valid",
-        details: err.errors
+        details: err.errors,
       });
     }
 
-    if (err.message.includes("salah") || err.message.includes("tidak ditemukan")) {
+    if (
+      err.message.includes("salah") ||
+      err.message.includes("tidak ditemukan")
+    ) {
       return handleAuthError(new UnauthorizedError(err.message), res);
     }
 

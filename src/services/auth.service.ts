@@ -1,4 +1,4 @@
-import prisma from "../prisma.js";
+import { prisma } from "../lib/prisma.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { RegisterInput, LoginInput } from "../types/auth.types.js";

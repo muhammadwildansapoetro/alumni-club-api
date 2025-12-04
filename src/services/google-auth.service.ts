@@ -1,9 +1,9 @@
-import { OAuth2Client } from 'google-auth-library';
-import prisma from '../prisma.js';
-import jwt from 'jsonwebtoken';
+import { OAuth2Client } from "google-auth-library";
+import { prisma } from "../lib/prisma.js";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret123';
-const JWT_EXPIRES = '7d';
+const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
+const JWT_EXPIRES = "7d";
 
 // Initialize Google OAuth2 client
 const googleClient = new OAuth2Client(
@@ -20,7 +20,9 @@ interface GoogleUserInfo {
   email_verified: boolean;
 }
 
-export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> => {
+export const verifyGoogleToken = async (
+  token: string
+): Promise<GoogleUserInfo> => {
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
@@ -29,13 +31,13 @@ export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> 
 
     const payload = ticket.getPayload();
     if (!payload) {
-      throw new Error('Invalid Google token payload');
+      throw new Error("Invalid Google token payload");
     }
 
     return {
       id: payload.sub!,
       email: payload.email!,
-      name: payload.name || payload.email?.split('@')[0] || 'Google User',
+      name: payload.name || payload.email?.split("@")[0] || "Google User",
       picture: payload.picture,
       email_verified: payload.email_verified || false,
     };
@@ -48,7 +50,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   const { id: googleId, email, name, picture } = googleUserInfo;
 
   if (!googleUserInfo.email_verified) {
-    throw new Error('Email belum diverifikasi oleh Google');
+    throw new Error("Email belum diverifikasi oleh Google");
   }
 
   // Check if user exists with Google ID
@@ -77,8 +79,10 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   });
 
   if (user) {
-    if (user.authProvider === 'EMAIL') {
-      throw new Error('Email sudah terdaftar dengan metode login biasa. Silakan login dengan password.');
+    if (user.authProvider === "EMAIL") {
+      throw new Error(
+        "Email sudah terdaftar dengan metode login biasa. Silakan login dengan password."
+      );
     }
 
     // Update existing user with Google info
@@ -88,7 +92,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
         googleId,
         name: name || user.name,
         avatar: picture,
-        authProvider: 'GOOGLE',
+        authProvider: "GOOGLE",
       },
     });
   } else {
@@ -99,8 +103,8 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
         name,
         googleId,
         avatar: picture,
-        authProvider: 'GOOGLE',
-        role: 'USER',
+        authProvider: "GOOGLE",
+        role: "USER",
       },
     });
   }
@@ -121,13 +125,13 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
 
 export const getGoogleAuthUrl = () => {
   const authUrl = googleClient.generateAuthUrl({
-    access_type: 'offline',
+    access_type: "offline",
     scope: [
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile',
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
     ],
     redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-    prompt: 'consent',
+    prompt: "consent",
   });
 
   return authUrl;

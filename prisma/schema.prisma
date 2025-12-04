@@ -1,11 +1,11 @@
 generator client {
   provider      = "prisma-client-js"
+  output        = "../generated/prisma"
   binaryTargets = ["native", "darwin-arm64", "windows"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ------------------------------------------------------
@@ -70,15 +70,15 @@ enum IndustryField {
 // ------------------------------------------------------
 
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  name          String?
-  password      String?
-  googleId      String?       @unique
-  avatar        String?
-  authProvider  AuthProvider  @default(EMAIL)
-  role          UserRole      @default(USER)
-  deletedAt     DateTime?
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String?
+  password     String?
+  googleId     String?      @unique
+  avatar       String?
+  authProvider AuthProvider @default(EMAIL)
+  role         UserRole     @default(USER)
+  deletedAt    DateTime?
 
   profile       AlumniProfile?
   jobPostings   JobPosting[]
