@@ -29,12 +29,16 @@ export const createUserSchema = z.object({
 
 // Update user profile schema
 export const updateUserProfileSchema = z.object({
+  email: z
+    .string()
+    .email("Format email tidak valid")
+    .min(1, "Email wajib diisi")
+    .optional(),
   name: z
     .string()
     .min(1, "Nama wajib diisi")
     .max(100, "Nama maksimal 100 karakter")
     .optional(),
-  avatar: z.string().url("Format URL tidak valid").optional(),
   profile: z
     .object({
       fullName: z

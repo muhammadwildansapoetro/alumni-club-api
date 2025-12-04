@@ -35,7 +35,6 @@ export const getAllUsersService = async (
         name: true,
         role: true,
         authProvider: true,
-        avatar: true,
         profile: {
           select: {
             id: true,
@@ -85,7 +84,6 @@ export const getUserByIdService = async (userId: string) => {
       name: true,
       role: true,
       authProvider: true,
-      avatar: true,
       profile: {
         select: {
           id: true,
@@ -163,7 +161,6 @@ export const getAlumniDirectoryService = async (
       select: {
         id: true,
         name: true,
-        avatar: true,
         profile: {
           select: {
             fullName: true,
@@ -217,7 +214,6 @@ export const updateUserRoleService = async (userId: string, role: UserRole) => {
       name: true,
       role: true,
       authProvider: true,
-      avatar: true,
       profile: {
         select: {
           id: true,
@@ -237,8 +233,8 @@ export const updateUserRoleService = async (userId: string, role: UserRole) => {
 export const updateUserProfileService = async (
   userId: string,
   data: {
+    email?: string;
     name?: string;
-    avatar?: string;
     profile?: {
       fullName?: string;
       city?: string;
@@ -274,11 +270,26 @@ export const updateUserProfileService = async (
     throw new Error("Pengguna tidak ditemukan");
   }
 
+  // Validasi email uniqueness jika email akan diupdate
+  if (data.email && data.email !== existingUser.email) {
+    const emailExists = await prisma.user.findFirst({
+      where: {
+        email: data.email.toLowerCase(),
+        id: { not: userId }, // Exclude current user
+        deletedAt: null,
+      },
+    });
+
+    if (emailExists) {
+      throw new Error("Email sudah terdaftar");
+    }
+  }
+
   const updatedUser = await prisma.$transaction(async (tx) => {
     // Perbarui info dasar pengguna
     const userUpdate: any = {};
     if (data.name !== undefined) userUpdate.name = data.name;
-    if (data.avatar !== undefined) userUpdate.avatar = data.avatar;
+    if (data.email !== undefined) userUpdate.email = data.email.toLowerCase();
 
     const updatedUserObj = await tx.user.update({
       where: { id: userId },
@@ -289,7 +300,6 @@ export const updateUserProfileService = async (
         name: true,
         role: true,
         authProvider: true,
-        avatar: true,
       },
     });
 

@@ -75,7 +75,6 @@ model User {
   name         String?
   password     String?
   googleId     String?      @unique
-  avatar       String?
   authProvider AuthProvider @default(EMAIL)
   role         UserRole     @default(USER)
   deletedAt    DateTime?

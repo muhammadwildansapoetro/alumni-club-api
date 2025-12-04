@@ -10,28 +10,33 @@ import {
   getAlumniDirectoryController,
   getUserByIdController,
   updateUserRoleController,
-  updateUserProfileController,
-  updateUserPasswordController,
   softDeleteUserController,
   restoreUserController,
   getDeletedUsersController,
   createUserController,
   importAlumniFromCSVController,
   validateCSVTemplateController,
+  updateUserProfileByAdminController,
+  resetUserPasswordByAdminController,
+  updateCurrentUserProfileController,
+  changeCurrentUserPasswordController,
 } from "../controllers/user.controller.js";
 import {
   uploadCSVSingle,
   handleUploadError,
 } from "../middlewares/upload.middleware.js";
+import { validateRequest } from "../middlewares/validation.middleware.js";
+import {
+  updateUserProfileSchema,
+  updatePasswordSchema,
+} from "../types/user.types.js";
 
 const router = Router();
 
 // All routes below require authentication
 router.use(authMiddleware);
 
-/* ============================
-   User-facing routes
-============================ */
+// User-facing routes
 
 // Public directory (authenticated users)
 router.get("/directory", getAlumniDirectoryController);
@@ -39,10 +44,19 @@ router.get("/directory", getAlumniDirectoryController);
 // View user profile
 router.get("/:id", getUserByIdController);
 
-/* ============================
-   Admin routes
-============================ */
+// User profile management (authenticated users can edit their own profile)
+router.patch(
+  "/profile",
+  validateRequest(updateUserProfileSchema),
+  updateCurrentUserProfileController
+);
+router.patch(
+  "/password",
+  validateRequest(updatePasswordSchema),
+  changeCurrentUserPasswordController
+);
 
+// Admin routes
 router.use("/admin", adminMiddleware);
 
 // User management
@@ -72,7 +86,15 @@ router.put("/admin/:id/restore", adminRateLimit, restoreUserController);
 router.delete("/admin/:id", adminRateLimit, softDeleteUserController);
 
 // Admin profile/password update (acting on a specific user)
-router.patch("/admin/:id/profile", adminRateLimit, updateUserProfileController);
-router.patch("/admin/:id/password", adminRateLimit, updateUserPasswordController);
+router.patch(
+  "/admin/:id/profile",
+  adminRateLimit,
+  updateUserProfileByAdminController
+);
+router.patch(
+  "/admin/:id/password",
+  adminRateLimit,
+  resetUserPasswordByAdminController
+);
 
 export default router;

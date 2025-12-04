@@ -47,7 +47,7 @@ export const verifyGoogleToken = async (
 };
 
 export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
-  const { id: googleId, email, name, picture } = googleUserInfo;
+  const { id: googleId, email, name } = googleUserInfo;
 
   if (!googleUserInfo.email_verified) {
     throw new Error("Email belum diverifikasi oleh Google");
@@ -91,7 +91,6 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
       data: {
         googleId,
         name: name || user.name,
-        avatar: picture,
         authProvider: "GOOGLE",
       },
     });
@@ -102,7 +101,6 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
         email,
         name,
         googleId,
-        avatar: picture,
         authProvider: "GOOGLE",
         role: "USER",
       },

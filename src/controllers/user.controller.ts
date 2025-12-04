@@ -165,7 +165,7 @@ export const updateUserRoleController = async (req: Request, res: Response) => {
 };
 
 // PATCH /api/users/:id/profile - Update profil pengguna (pemilik atau admin)
-export const updateUserProfileController = async (
+export const updateUserProfileByAdminController = async (
   req: Request,
   res: Response
 ) => {
@@ -216,7 +216,7 @@ export const updateUserProfileController = async (
 };
 
 // PUT /api/users/:id/password - Update kata sandi pengguna (pemilik atau admin)
-export const updateUserPasswordController = async (
+export const resetUserPasswordByAdminController = async (
   req: Request,
   res: Response
 ) => {
@@ -518,6 +518,105 @@ export const validateCSVTemplateController = async (
     });
   } catch (error) {
     console.error("Error di validateCSVTemplateController:", error);
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Terjadi kesalahan internal",
+    });
+  }
+};
+
+// PATCH /api/users/profile - Update profil sendiri (authenticated user)
+export const updateCurrentUserProfileController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const data = req.body;
+
+    const updatedUser = await updateUserProfileService(
+      user.id,
+      data,
+      user.id,
+      user.role
+    );
+
+    res.json({
+      success: true,
+      message: "Berhasil memperbarui profil",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error di updateOwnProfileController:", error);
+    if (
+      error instanceof Error &&
+      (error.message === "Pengguna tidak ditemukan" ||
+        error.message ===
+          "Akses ditolak - Anda hanya dapat memperbarui profil Anda sendiri")
+    ) {
+      return res.status(404).json({
+        success: false,
+        error: error.message,
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Terjadi kesalahan internal",
+    });
+  }
+};
+
+// PATCH /api/users/password - Update kata sandi sendiri (authenticated user)
+export const changeCurrentUserPasswordController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: "Kata sandi baru minimal 8 karakter",
+      });
+    }
+
+    // Current password wajib untuk user yang mengganti password sendiri
+    if (!currentPassword) {
+      return res.status(400).json({
+        success: false,
+        error: "Kata sandi saat ini diperlukan",
+      });
+    }
+
+    const result = await updateUserPasswordService(
+      user.id,
+      currentPassword,
+      newPassword,
+      user.id,
+      user.role
+    );
+
+    res.json({
+      success: true,
+      message: "Berhasil memperbarui kata sandi",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error di updateOwnPasswordController:", error);
+    if (
+      error instanceof Error &&
+      (error.message === "Pengguna tidak ditemukan" ||
+        error.message === "Kata sandi saat ini salah")
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
     res.status(500).json({
       success: false,
       error:
