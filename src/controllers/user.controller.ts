@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../types/express.types.js";
 import {
   getAllUsersService,
   getUserByIdService,
@@ -163,7 +164,7 @@ export const updateUserRoleController = async (req: Request, res: Response) => {
   }
 };
 
-// PUT /api/users/:id/profile - Update profil pengguna (pemilik atau admin)
+// PATCH /api/users/:id/profile - Update profil pengguna (pemilik atau admin)
 export const updateUserProfileController = async (
   req: Request,
   res: Response
@@ -178,7 +179,7 @@ export const updateUserProfileController = async (
       });
     }
 
-    const user = (req as any).user;
+    const user = (req as AuthenticatedRequest).user;
     const data = req.body;
 
     const updatedUser = await updateUserProfileService(

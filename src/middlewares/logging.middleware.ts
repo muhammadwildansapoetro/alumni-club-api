@@ -1,0 +1,69 @@
+import type { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
+
+// Generate unique request ID
+const getRequestId = () => crypto.randomBytes(16).toString('hex');
+
+// Request logging middleware
+export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+  const requestId = getRequestId();
+  const timestamp = new Date().toISOString();
+  const userAgent = req.get('User-Agent') || 'Unknown';
+  const ip = req.ip || req.socket.remoteAddress || 'Unknown';
+  const user = (req as any).user?.id || 'anonymous';
+
+  // Add request ID to request object for tracking
+  (req as any).requestId = requestId;
+
+  // Log request start
+  console.log(`[${timestamp}] [${requestId}] ${req.method} ${req.originalUrl}`, {
+    ip,
+    userAgent,
+    user,
+    query: req.query,
+    params: req.params,
+    // Don't log sensitive request body
+    ...(req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH' && { body: req.body })
+  });
+
+  // Override res.end to log response
+  const originalEnd = res.end.bind(res);
+  res.end = function(chunk?: any, encoding?: any, cb?: any) {
+    const responseTime = Date.now() - (req as any).startTime;
+    const statusCode = res.statusCode;
+
+    console.log(`[${new Date().toISOString()}] [${requestId}] ${req.method} ${req.originalUrl} - ${statusCode}`, {
+      responseTime: `${responseTime}ms`,
+      statusCode,
+      ip,
+      user
+    });
+
+    // Call original end with correct signature
+    return originalEnd(chunk, encoding, cb);
+  };
+
+  // Track start time
+  (req as any).startTime = Date.now();
+  next();
+};
+
+// Sensitive operation logger
+export const sensitiveOperationLogger = (operation: string) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const requestId = (req as any).requestId || 'unknown';
+    const user = (req as any).user?.id || 'anonymous';
+    const ip = req.ip || req.socket.remoteAddress || 'Unknown';
+
+    console.warn(`[${new Date().toISOString()}] [${requestId}] SENSITIVE OPERATION: ${operation}`, {
+      user,
+      ip,
+      method: req.method,
+      url: req.originalUrl,
+      params: req.params,
+      body: req.body // Log body for sensitive operations for audit trail
+    });
+
+    next();
+  };
+};

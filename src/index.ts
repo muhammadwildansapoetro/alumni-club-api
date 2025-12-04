@@ -4,6 +4,9 @@ dotenv.config();
 import express from "express";
 import type { Application, Request, Response } from "express";
 import cors from "cors";
+import { generalRateLimit } from "./middlewares/rate-limit.middleware.js";
+import { requestLogger } from "./middlewares/logging.middleware.js";
+import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 import authRouter from "./routers/auth.router";
 import userRouter from "./routers/user.routes.js";
 
@@ -12,6 +15,12 @@ const app: Application = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Apply request logging before other middleware
+app.use(requestLogger);
+
+// Apply general rate limiting to all API endpoints
+app.use(generalRateLimit);
 
 app.use(
   cors({
@@ -25,9 +34,15 @@ app.use(
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 
-app.get("/api", (req: Request, res: Response) => {
+app.get("/api", (_req: Request, res: Response) => {
   res.status(200).send(`Connected to ${process.env.APP_NAME} API`);
 });
+
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
+// Centralized error handling
+app.use(errorHandler);
 
 app.listen(PORT, () =>
   console.log(`Your server is running on http://localhost:${PORT}/api`)
