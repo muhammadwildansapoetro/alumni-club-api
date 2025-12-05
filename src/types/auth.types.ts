@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Department enum matching the Prisma schema
 const DepartmentEnum = z.enum(["TEP", "TPN", "TIN"], {
-  message: "Jurusan harus salah satu dari: TEP, TPN, atau TIN"
+  message: "Jurusan harus salah satu dari: TEP, TPN, atau TIN",
 });
 
 export const registerSchema = z.object({
@@ -16,8 +16,11 @@ export const registerSchema = z.object({
   classYear: z
     .number()
     .int("Tahun angkatan harus berupa angka bulat")
-    .min(1957, "Tahun angkatan tidak valid")
-    .max(new Date().getFullYear(), "Tahun angkatan tidak boleh melebihi tahun ini"),
+    .min(1983, "Tahun angkatan tidak valid")
+    .max(
+      new Date().getFullYear(),
+      "Tahun angkatan tidak boleh melebihi tahun ini"
+    ),
 });
 
 export const loginSchema = z.object({

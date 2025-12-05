@@ -145,3 +145,32 @@ model BusinessDirectory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// STATISTICS
+
+enum StatisticsType {
+  ALUMNI
+  JOB_POSTINGS
+  BUSINESS_POSTINGS
+}
+
+model Statistics {
+  id     String @id @default(cuid())
+  type   StatisticsType @unique
+
+  // Alumni specific fields
+  alumniData Json?  // Contains all alumni-specific statistics
+
+  // Job posting specific fields
+  jobData Json?     // Contains all job posting statistics
+
+  // Business posting specific fields
+  businessData Json? // Contains all business posting statistics
+
+  // Common fields
+  totalItems    Int @default(0)
+  lastUpdated   DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

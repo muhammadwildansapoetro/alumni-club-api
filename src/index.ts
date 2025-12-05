@@ -14,6 +14,8 @@ import authRouter from "./routers/auth.router";
 import userRouter from "./routers/user.routes.js";
 import jobRouter from "./routers/job.routes.js";
 import businessRouter from "./routers/business.routes.js";
+import alumniRouter from "./routers/alumni.routes.js";
+import statisticsRouter from "./routers/statistics.routes.js";
 
 const PORT: number = 8000;
 const app: Application = express();
@@ -40,6 +42,8 @@ app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/jobs", jobRouter);
 app.use("/businesses", businessRouter);
+app.use("/alumni", alumniRouter);
+app.use("/statistics", statisticsRouter);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(200).send(`Connected to ${process.env.APP_NAME} API`);
