@@ -11,7 +11,7 @@ This is a TypeScript-based REST API for an **alumni club management system** for
 - **Runtime**: Bun (fast all-in-one JavaScript runtime)
 - **Framework**: Express.js v5.1.0
 - **Database**: PostgreSQL (hosted on Supabase)
-- **ORM**: Prisma v5.17.0
+- **ORM**: Prisma v7.1.0
 - **Authentication**: JWT + bcryptjs
 - **Validation**: Zod schemas
 - **Language**: TypeScript (ESNext target)
@@ -44,7 +44,7 @@ npx prisma studio        # Open database browser
 - **User**: Authentication base with role-based access (USER/ADMIN)
 - **AlumniProfile**: Extended alumni data with department, class year, employment info
 - **JobPosting**: Job opportunities for alumni
-- **BusinessPosting**: Business directory and shopping features
+- **BusinessDirectory**: Business directory and shopping features
 
 ### Database Configuration
 - Uses both `DATABASE_URL` (connection pooling) and `DIRECT_URL` (migrations)
@@ -53,8 +53,9 @@ npx prisma studio        # Open database browser
 
 ### Key Enums
 - **Department**: TEP, TPN, TIN (FTIP departments)
-- **EmploymentLevel**: INTERN, ENTRY_LEVEL, MID_LEVEL, SENIOR_LEVEL, MANAGER, DIRECTOR, C_LEVEL
-- **IndustryField**: AGRICULTURE, CREATIVE, EDUCATION, ENGINEERING, FINANCE, HEALTHCARE, HOSPITALITY, INFORMATION_TECHNOLOGY, LEGAL, MANUFACTURING, MARKETING, MEDIA, PUBLIC_SERVICE, REAL_ESTATE, RETAIL, SCIENCE, SPORTS, TRANSPORTATION, UTILITIES, OTHER
+- **EmploymentLevel**: INTERN, STAFF, SUPERVISOR, MANAGER, SENIOR_MANAGER, DIRECTOR, VP, C_LEVEL, FOUNDER, OTHER
+- **IncomeRange**: BELOW_5M, RANGE_5_10M, RANGE_10_20M, ABOVE_20M, UNKNOWN
+- **IndustryField**: AGRICULTURE, FOOD_TECH, BIOTECH, RESEARCH, EDUCATION, ENGINEERING, BUSINESS, MARKETING, FINANCE, GOVERNMENT, FREELANCE, OTHER
 
 ## API Structure
 
@@ -68,6 +69,12 @@ npx prisma studio        # Open database browser
 - `GET /api` - Health check
 - `POST /auth/register` - User registration
 - `POST /auth/login` - User login
+- `/auth/google` - Google OAuth authentication
+- `/users` - User management
+- `/jobs` - Job posting CRUD
+- `/businesses` - Business directory CRUD
+- `/alumni` - Alumni profile operations
+- `/statistics` - System statistics
 
 ### Project Structure
 ```
@@ -76,7 +83,8 @@ src/
 ├── services/       # Business logic
 ├── middlewares/    # Express middleware
 ├── routers/        # API routes
-└── types/         # TypeScript definitions and Zod schemas
+├── types/         # TypeScript definitions and Zod schemas
+└── lib/           # Database connection and utilities
 ```
 
 ## Architecture Patterns
@@ -103,6 +111,6 @@ Required variables:
 
 - Error messages are in Indonesian (e.g., "Email sudah terdaftar")
 - Follow FTIP-specific business logic and field naming
-- Use Prisma client from `src/prisma.ts` for database operations
+- Use Prisma client from `src/lib/prisma.ts` for database operations
 - CORS configured for frontend integration
 - Cookie-based session management available but not primary auth method

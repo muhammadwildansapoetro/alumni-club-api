@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { verifyGoogleToken, googleAuthService, getGoogleAuthUrl } from '../services/google-auth.service.js';
-import { googleAuthSchema } from '../types/auth.types.js';
+import { verifyGoogleToken, googleAuthService, googleRegisterService, getGoogleAuthUrl } from '../services/google-auth.service.js';
+import { googleAuthSchema, googleRegisterSchema } from '../types/auth.types.js';
 
 export const getGoogleAuthController = (req: Request, res: Response) => {
   try {
@@ -29,6 +29,48 @@ export const googleAuthController = async (req: Request, res: Response) => {
       message: 'Login dengan Google berhasil',
       user,
       token,
+    });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+};
+
+export const googleRegisterController = async (req: Request, res: Response) => {
+  try {
+    const body = googleRegisterSchema.parse(req.body);
+
+    // Verify Google token
+    const googleUserInfo = await verifyGoogleToken(body.token);
+
+    // Register user with Google info and additional registration data
+    const { user, token } = await googleRegisterService(
+      googleUserInfo,
+      body.department,
+      body.classYear
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Pendaftaran dengan Google berhasil! Selamat bergabung dengan FTIP Unpad Alumni Club.',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          authProvider: user.authProvider,
+          createdAt: user.createdAt,
+        },
+        alumniProfile: {
+          id: user.profile.id,
+          fullName: user.profile.fullName,
+          department: user.profile.department,
+          classYear: user.profile.classYear,
+          createdAt: user.profile.createdAt,
+        },
+        token,
+        expiresIn: "7d",
+      },
     });
   } catch (err: any) {
     return res.status(400).json({ error: err.message });

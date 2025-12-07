@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import { registerService, loginService } from "../services/auth.service.js";
-import { registerSchema, loginSchema } from "../types/auth.types.js";
 import {
   ConflictError,
   UnauthorizedError,
   handleAuthError,
 } from "../utils/errors.js";
+import { registerSchema, loginSchema } from "../types/auth.types.js";
 
 export const registerController = async (req: Request, res: Response) => {
   try {

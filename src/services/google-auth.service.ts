@@ -56,6 +56,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   // Check if user exists with Google ID
   let user = await prisma.user.findUnique({
     where: { googleId },
+    include: { profile: true },
   });
 
   if (user) {
@@ -76,6 +77,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   // Check if user exists with same email but different auth provider
   user = await prisma.user.findUnique({
     where: { email },
+    include: { profile: true },
   });
 
   if (user) {
@@ -85,7 +87,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
       );
     }
 
-    // Update existing user with Google info
+    // Update existing user with Google info (user was previously registered)
     user = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -93,18 +95,13 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
         name: name || user.name,
         authProvider: "GOOGLE",
       },
+      include: { profile: true },
     });
   } else {
-    // Create new user with Google info
-    user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        googleId,
-        authProvider: "GOOGLE",
-        role: "USER",
-      },
-    });
+    // User not found in database - must register first
+    throw new Error(
+      "Email Anda belum terdaftar di sistem FTIP Unpad Alumni Club. Silakan daftar terlebih dahulu melalui halaman pendaftaran."
+    );
   }
 
   // Generate JWT token
@@ -119,6 +116,81 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   );
 
   return { user, token };
+};
+
+export const googleRegisterService = async (googleUserInfo: GoogleUserInfo, department: string, classYear: number) => {
+  const { id: googleId, email, name } = googleUserInfo;
+
+  if (!googleUserInfo.email_verified) {
+    throw new Error("Email belum diverifikasi oleh Google");
+  }
+
+  // Check if user already exists with Google ID
+  const existingGoogleUser = await prisma.user.findUnique({
+    where: { googleId },
+  });
+
+  if (existingGoogleUser) {
+    throw new Error("Akun Google sudah terdaftar. Silakan login.");
+  }
+
+  // Check if user exists with same email
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (existingUser) {
+    if (existingUser.authProvider === "EMAIL") {
+      throw new Error(
+        "Email sudah terdaftar dengan metode login biasa. Silakan login dengan password."
+      );
+    }
+    if (existingUser.authProvider === "GOOGLE") {
+      throw new Error("Akun Google sudah terdaftar. Silakan login.");
+    }
+  }
+
+  // Create new user and alumni profile with Google info
+  const result = await prisma.$transaction(async (tx) => {
+    // Create User first
+    const newUser = await tx.user.create({
+      data: {
+        email,
+        name,
+        googleId,
+        authProvider: "GOOGLE",
+        role: "USER",
+      },
+    });
+
+    // Create AlumniProfile with provided department and class year
+    const alumniProfile = await tx.alumniProfile.create({
+      data: {
+        userId: newUser.id,
+        fullName: name,
+        department: department as "TEP" | "TPN" | "TIN",
+        classYear: classYear,
+      },
+    });
+
+    return { user: newUser, profile: alumniProfile };
+  });
+
+  // Generate JWT token
+  const token = jwt.sign(
+    {
+      id: result.user.id,
+      email: result.user.email,
+      role: result.user.role,
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES }
+  );
+
+  return {
+    user: { ...result.user, profile: result.profile },
+    token
+  };
 };
 
 export const getGoogleAuthUrl = () => {

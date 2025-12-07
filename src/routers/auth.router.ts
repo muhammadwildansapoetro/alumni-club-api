@@ -1,18 +1,17 @@
 import { Router } from "express";
 import {
-  registerController,
-  loginController,
-} from "../controllers/auth.controller.js";
-import { authRateLimit } from "../middlewares/rate-limit.middleware.js";
-import googleAuthRouter from "./google-auth.router.js";
+  googleAuthController,
+  googleRegisterController,
+  googleCallbackController,
+  getGoogleAuthController
+} from "../controllers/google-auth.controller.js";
 
 const authRouter = Router();
 
-// Regular email/password authentication
-authRouter.post("/register", authRateLimit, registerController);
-authRouter.post("/login", authRateLimit, loginController);
-
 // Google authentication endpoints
-authRouter.use("/google", googleAuthRouter);
+authRouter.get("/google", getGoogleAuthController);
+authRouter.post("/google", googleAuthController);
+authRouter.post("/google/register", googleRegisterController);
+authRouter.get("/google/callback", googleCallbackController);
 
 export default authRouter;
