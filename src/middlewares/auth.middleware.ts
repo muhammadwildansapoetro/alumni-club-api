@@ -15,7 +15,7 @@ export const authMiddleware = (
   if (!token) {
     return res.status(401).json({
       success: false,
-      error: "Token tidak ditemukan"
+      error: "Token tidak ditemukan",
     });
   }
 
@@ -26,7 +26,6 @@ export const authMiddleware = (
       decryptedToken = decrypt(token);
     } catch (decryptError) {
       // If decryption fails, assume token is not encrypted
-      console.log('Token is not encrypted, using as-is');
     }
 
     const decoded = jwt.verify(decryptedToken, JWT_SECRET) as {
@@ -45,7 +44,7 @@ export const authMiddleware = (
   } catch (err) {
     return res.status(401).json({
       success: false,
-      error: "Token tidak valid"
+      error: "Token tidak valid",
     });
   }
 };

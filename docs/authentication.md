@@ -15,11 +15,13 @@ This guide provides API implementation instructions for Google OAuth authenticat
 ### What We Need vs What We Don't Need
 
 ✅ **WE NEED: Google ID Token (JWT format)**
+
 ```
 eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlNdkwM... (long string with 3 dots)
 ```
 
 ❌ **WE DON'T NEED:**
+
 - Session identifiers like: `google-auth-1765116596317`
 - OAuth access tokens
 - Authorization codes
@@ -29,18 +31,20 @@ eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlNdkwM... (long string with 3 dots)
 #### Option 1: Google Sign-In for Web (Recommended)
 
 1. **Load Google Sign-In script:**
+
 ```html
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 ```
 
 2. **Initialize Google Sign-In:**
+
 ```javascript
 function initializeGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: "YOUR_GOOGLE_CLIENT_ID", // Get from backend .env file
     callback: handleGoogleSignIn,
     auto_select: false,
-    cancel_on_tap_outside: true
+    cancel_on_tap_outside: true,
   });
 
   // Render the sign-in button
@@ -51,7 +55,7 @@ function initializeGoogleSignIn() {
       size: "large",
       text: "signin_with",
       shape: "rectangular",
-      logo_alignment: "left"
+      logo_alignment: "left",
     }
   );
 }
@@ -61,10 +65,8 @@ function handleGoogleSignIn(response) {
   // response.credential contains the Google ID token
   const idToken = response.credential;
 
-  console.log("Received Google ID token:", idToken.substring(0, 50) + "...");
-
   // Validate the token format
-  if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+  if (!idToken.includes(".") || idToken.split(".").length !== 3) {
     console.error("Invalid ID token format received");
     return;
   }
@@ -82,7 +84,7 @@ function initializeOneTap() {
     client_id: "YOUR_GOOGLE_CLIENT_ID",
     callback: handleGoogleSignIn,
     auto_select: false,
-    cancel_on_tap_outside: true
+    cancel_on_tap_outside: true,
   });
 
   // Display One Tap
@@ -97,12 +99,12 @@ Before sending the token to backend:
 ```javascript
 const validateGoogleIdToken = (token) => {
   // 1. Check if it's a string
-  if (typeof token !== 'string') {
+  if (typeof token !== "string") {
     return false;
   }
 
   // 2. Check JWT format (3 segments separated by dots)
-  const segments = token.split('.');
+  const segments = token.split(".");
   if (segments.length !== 3) {
     return false;
   }
@@ -114,10 +116,10 @@ const validateGoogleIdToken = (token) => {
 
   // 4. Basic base64 validation
   try {
-    segments.forEach(segment => {
+    segments.forEach((segment) => {
       if (segment.length > 0) {
         // Pad base64 if needed and try to decode
-        const padded = segment + '='.repeat((4 - segment.length % 4) % 4);
+        const padded = segment + "=".repeat((4 - (segment.length % 4)) % 4);
         btoa(atob(padded));
       }
     });
@@ -150,12 +152,12 @@ http://localhost:8000
 
 ## Available Endpoints
 
-| Method | Endpoint                   | Description                        |
-| ------ | -------------------------- | ---------------------------------- |
-| `GET`  | `/auth/google`             | Get Google OAuth URL               |
-| `POST` | `/auth/google`             | Login existing user with Google    |
-| `POST` | `/auth/google/register`    | Register new user with Google      |
-| `GET`  | `/auth/google/callback`    | Google OAuth callback (full flow)  |
+| Method | Endpoint                | Description                       |
+| ------ | ----------------------- | --------------------------------- |
+| `GET`  | `/auth/google`          | Get Google OAuth URL              |
+| `POST` | `/auth/google`          | Login existing user with Google   |
+| `POST` | `/auth/google/register` | Register new user with Google     |
+| `GET`  | `/auth/google/callback` | Google OAuth callback (full flow) |
 
 ---
 
@@ -379,7 +381,7 @@ const handleGoogleRegistration = async (googleSignInResponse) => {
     const idToken = googleSignInResponse.credential;
 
     // ✅ Validate the token format before sending
-    if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+    if (!idToken.includes(".") || idToken.split(".").length !== 3) {
       throw new Error("Invalid Google ID token format");
     }
 
@@ -388,7 +390,6 @@ const handleGoogleRegistration = async (googleSignInResponse) => {
       classYear: 2020,
     });
 
-    console.log("Registration successful:", result);
     // Redirect to dashboard
     window.location.href = "/dashboard";
   } catch (error) {
@@ -437,13 +438,12 @@ const handleGoogleLogin = async (googleSignInResponse) => {
     const idToken = googleSignInResponse.credential;
 
     // ✅ Validate the token format before sending
-    if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+    if (!idToken.includes(".") || idToken.split(".").length !== 3) {
       throw new Error("Invalid Google ID token format");
     }
 
     const result = await loginWithGoogle(idToken);
 
-    console.log("Login successful:", result);
     // Redirect to dashboard
     window.location.href = "/dashboard";
   } catch (error) {
@@ -504,14 +504,14 @@ const getUserProfile = async () => {
 
 ### Common Error Messages
 
-| Error Message                                     | Description                               | Suggested Action                  |
-| ------------------------------------------------- | ----------------------------------------- | -------------------------------- |
-| `Email Anda belum terdaftar`                      | Google email not in database              | Redirect to registration          |
-| `Email sudah terdaftar`                           | Email already exists                      | Redirect to login                 |
-| `Google token verification failed`                | Invalid Google token                      | Ask user to retry Google sign-in  |
-| `Email belum diverifikasi oleh Google`            | Email not verified by Google              | Ask user to verify email first    |
-| `Invalid token format. Expected Google JWT ID token` | Wrong token format received              | Fix frontend Google Sign-In       |
-| `Wrong number of segments in token`               | Session identifier instead of ID token    | Fix frontend to extract proper ID token |
+| Error Message                                        | Description                            | Suggested Action                        |
+| ---------------------------------------------------- | -------------------------------------- | --------------------------------------- |
+| `Email Anda belum terdaftar`                         | Google email not in database           | Redirect to registration                |
+| `Email sudah terdaftar`                              | Email already exists                   | Redirect to login                       |
+| `Google token verification failed`                   | Invalid Google token                   | Ask user to retry Google sign-in        |
+| `Email belum diverifikasi oleh Google`               | Email not verified by Google           | Ask user to verify email first          |
+| `Invalid token format. Expected Google JWT ID token` | Wrong token format received            | Fix frontend Google Sign-In             |
+| `Wrong number of segments in token`                  | Session identifier instead of ID token | Fix frontend to extract proper ID token |
 
 ### Error Handling Implementation
 
@@ -542,7 +542,10 @@ const handleAuthError = (error) => {
     window.location.href = "/register";
   } else if (error.message.includes("sudah terdaftar")) {
     window.location.href = "/login";
-  } else if (error.message.includes("token") || error.message.includes("session")) {
+  } else if (
+    error.message.includes("token") ||
+    error.message.includes("session")
+  ) {
     // Token format errors - reload page to reset auth state
     console.error("Token format error detected:", error.message);
     window.location.reload();
@@ -626,14 +629,14 @@ The User model now contains only Google authentication fields:
 
 ```typescript
 interface User {
-  id: string;                    // Primary key
-  email: string;                 // User's email (unique)
-  name: string | null;           // User's name from Google
-  googleId: string | null;       // Google ID (unique)
-  role: 'USER' | 'ADMIN';        // User role
-  deletedAt: Date | null;        // Soft delete timestamp
-  createdAt: Date;               // Account creation date
-  updatedAt: Date;               // Last update date
+  id: string; // Primary key
+  email: string; // User's email (unique)
+  name: string | null; // User's name from Google
+  googleId: string | null; // Google ID (unique)
+  role: "USER" | "ADMIN"; // User role
+  deletedAt: Date | null; // Soft delete timestamp
+  createdAt: Date; // Account creation date
+  updatedAt: Date; // Last update date
 }
 ```
 
@@ -643,18 +646,18 @@ Extended profile information for alumni:
 
 ```typescript
 interface AlumniProfile {
-  id: string;                    // Primary key
-  userId: string;                // Foreign key to User
-  fullName: string;              // Full name
-  department: 'TEP' | 'TPN' | 'TIN';  // FTIP department
-  classYear: number;             // Class year
-  city: string | null;           // Current city
-  industry: string | null;       // Industry field
-  employmentLevel: string | null;  // Employment level
-  incomeRange: string | null;    // Income range
-  jobTitle: string | null;       // Current job title
-  companyName: string | null;    // Current company
-  linkedInUrl: string | null;    // LinkedIn profile URL
+  id: string; // Primary key
+  userId: string; // Foreign key to User
+  fullName: string; // Full name
+  department: "TEP" | "TPN" | "TIN"; // FTIP department
+  classYear: number; // Class year
+  city: string | null; // Current city
+  industry: string | null; // Industry field
+  employmentLevel: string | null; // Employment level
+  incomeRange: string | null; // Income range
+  jobTitle: string | null; // Current job title
+  companyName: string | null; // Current company
+  linkedInUrl: string | null; // LinkedIn profile URL
   createdAt: Date;
   updatedAt: Date;
 }
@@ -683,7 +686,6 @@ const testRegistration = async () => {
     });
 
     const data = await response.json();
-    console.log("Registration test result:", data);
   } catch (error) {
     console.error("Registration test failed:", error);
   }
@@ -707,7 +709,6 @@ const testLogin = async () => {
     });
 
     const data = await response.json();
-    console.log("Login test result:", data);
   } catch (error) {
     console.error("Login test failed:", error);
   }
@@ -776,17 +777,19 @@ The Google Authentication API provides a secure, Google-only authentication syst
 
 ### Debugging Tips
 
-If you encounter "google-auth-*" errors:
+If you encounter "google-auth-\*" errors:
+
 1. Check console logs for token format validation
 2. Ensure you're using `response.credential` from Google Sign-In
 3. Verify the token is a JWT (3 segments with dots)
 4. Make sure Google Sign-In is properly initialized
 
 **Working Example:**
+
 ```javascript
 function handleGoogleSignIn(response) {
   const idToken = response.credential; // ✅ Correct
-  if (idToken && idToken.includes('.') && idToken.split('.').length === 3) {
+  if (idToken && idToken.includes(".") && idToken.split(".").length === 3) {
     sendToBackend(idToken); // ✅ This works
   }
 }
@@ -799,6 +802,7 @@ function handleGoogleSignIn(response) {
 The system has been migrated from mixed authentication (email/password + Google) to Google-only authentication:
 
 ### Removed Features:
+
 - Email/password registration
 - Email/password login
 - Password change functionality
@@ -806,6 +810,7 @@ The system has been migrated from mixed authentication (email/password + Google)
 - Password-related database fields
 
 ### Current Features:
+
 - Google OAuth authentication only
 - JWT session management
 - Secure token verification

@@ -23,12 +23,10 @@ const app: Application = express();
 
 // Validate encryption key on startup
 if (!validateEncryptionKey()) {
-  console.error('❌ Invalid ENCRYPTION_KEY environment variable');
-  console.error('Please set a valid 32-byte base64-encoded encryption key');
+  console.error("❌ Invalid ENCRYPTION_KEY environment variable");
+  console.error("Please set a valid 32-byte base64-encoded encryption key");
   process.exit(1);
 }
-
-console.log('✅ Encryption key validated successfully');
 
 app.use(express.json());
 app.use(cookieParser());
