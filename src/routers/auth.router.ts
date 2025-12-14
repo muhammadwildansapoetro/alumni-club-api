@@ -5,13 +5,14 @@ import {
   googleCallbackController,
   getGoogleAuthController
 } from "../controllers/google-auth.controller.js";
+import { authDecryptionMiddleware } from "../middlewares/decryption.middleware.js";
 
 const authRouter = Router();
 
 // Google authentication endpoints
 authRouter.get("/google", getGoogleAuthController);
-authRouter.post("/google", googleAuthController);
-authRouter.post("/google/register", googleRegisterController);
+authRouter.post("/google", authDecryptionMiddleware, googleAuthController);
+authRouter.post("/google/register", authDecryptionMiddleware, googleRegisterController);
 authRouter.get("/google/callback", googleCallbackController);
 
 export default authRouter;

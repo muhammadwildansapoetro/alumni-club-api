@@ -30,6 +30,7 @@ import {
   updateUserProfileSchema,
   updatePasswordSchema,
 } from "../types/user.types.js";
+import { profileDecryptionMiddleware, authDecryptionMiddleware } from "../middlewares/decryption.middleware.js";
 
 const router = Router();
 
@@ -47,11 +48,13 @@ router.get("/:id", getUserByIdController);
 // User profile management (authenticated users can edit their own profile)
 router.patch(
   "/profile",
+  profileDecryptionMiddleware,
   validateRequest(updateUserProfileSchema),
   updateCurrentUserProfileController
 );
 router.patch(
   "/password",
+  authDecryptionMiddleware,
   validateRequest(updatePasswordSchema),
   changeCurrentUserPasswordController
 );

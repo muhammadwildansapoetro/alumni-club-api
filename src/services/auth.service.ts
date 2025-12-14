@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.ts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { encrypt } from "../lib/encryption.js";
 import type { RegisterInput, LoginInput } from "../types/auth.types.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -85,5 +86,8 @@ export const loginService = async (data: LoginInput) => {
     { expiresIn: JWT_EXPIRES }
   );
 
-  return { user, token };
+  // Encrypt token for secure transmission
+  const encryptedToken = encrypt(token);
+
+  return { user, token: encryptedToken };
 };

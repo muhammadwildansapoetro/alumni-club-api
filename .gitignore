@@ -13,7 +13,7 @@ coverage
 # logs
 logs
 _.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+report.[0-9]_[0-9]_[0-9]_[0-9].json
 
 # dotenv environment variable files
 .env
@@ -33,4 +33,26 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Finder (MacOS) folder config
 .DS_Store
 
+# Generated files
 /generated/prisma
+
+# Project documentation (confidential)
+CLAUDE.md
+
+# Security and configuration files
+*.key
+*.pem
+*.p12
+*.crt
+*.cert
+*.pfx
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.dump

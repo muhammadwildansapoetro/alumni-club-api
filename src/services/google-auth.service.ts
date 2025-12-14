@@ -1,6 +1,7 @@
 import { OAuth2Client } from "google-auth-library";
 import { prisma } from "../lib/prisma.js";
 import jwt from "jsonwebtoken";
+import { encrypt } from "../lib/encryption.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
 const JWT_EXPIRES = "7d";
@@ -61,7 +62,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
 
   if (user) {
     // User exists with Google ID, login
-    const token = jwt.sign(
+    const rawToken = jwt.sign(
       {
         id: user.id,
         email: user.email,
@@ -71,7 +72,10 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
       { expiresIn: JWT_EXPIRES }
     );
 
-    return { user, token };
+    // Encrypt token for secure transmission
+    const encryptedToken = encrypt(rawToken);
+
+    return { user, token: encryptedToken };
   }
 
   // Check if user exists with same email but different auth provider
@@ -105,7 +109,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   }
 
   // Generate JWT token
-  const token = jwt.sign(
+  const rawToken = jwt.sign(
     {
       id: user.id,
       email: user.email,
@@ -115,7 +119,10 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
     { expiresIn: JWT_EXPIRES }
   );
 
-  return { user, token };
+  // Encrypt token for secure transmission
+  const encryptedToken = encrypt(rawToken);
+
+  return { user, token: encryptedToken };
 };
 
 export const googleRegisterService = async (googleUserInfo: GoogleUserInfo, department: string, classYear: number) => {
@@ -177,7 +184,7 @@ export const googleRegisterService = async (googleUserInfo: GoogleUserInfo, depa
   });
 
   // Generate JWT token
-  const token = jwt.sign(
+  const rawToken = jwt.sign(
     {
       id: result.user.id,
       email: result.user.email,
@@ -187,9 +194,12 @@ export const googleRegisterService = async (googleUserInfo: GoogleUserInfo, depa
     { expiresIn: JWT_EXPIRES }
   );
 
+  // Encrypt token for secure transmission
+  const encryptedToken = encrypt(rawToken);
+
   return {
     user: { ...result.user, profile: result.profile },
-    token
+    token: encryptedToken
   };
 };
 

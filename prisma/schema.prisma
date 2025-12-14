@@ -15,10 +15,6 @@ enum UserRole {
   ADMIN
 }
 
-enum AuthProvider {
-  EMAIL
-  GOOGLE
-}
 
 enum Department {
   TEP
@@ -66,17 +62,15 @@ enum IndustryField {
 // USER (Auth base)
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  name         String?
-  password     String?
-  googleId     String?      @unique
-  authProvider AuthProvider @default(EMAIL)
-  role         UserRole     @default(USER)
-  deletedAt    DateTime?
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  googleId  String?  @unique
+  role      UserRole @default(USER)
+  deletedAt DateTime?
 
-  profile       AlumniProfile?
-  jobPostings   JobPosting[]
+  profile          AlumniProfile?
+  jobPostings      JobPosting[]
   businessListings BusinessDirectory[]
 
   createdAt DateTime @default(now())

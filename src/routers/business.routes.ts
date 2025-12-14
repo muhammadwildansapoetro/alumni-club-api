@@ -14,6 +14,7 @@ import {
   updateBusinessListingSchema,
   businessQuerySchema,
 } from "../types/business.types.js";
+import { decryptionMiddleware } from "../middlewares/decryption.middleware.js";
 
 const router = Router();
 
@@ -24,10 +25,10 @@ router.get("/", validateRequest(businessQuerySchema, "query"), getAllBusinessLis
 router.get("/:id", getBusinessListingByIdController);
 
 // POST /api/businesses - Create new business listing (all authenticated users)
-router.post("/", validateRequest(createBusinessListingSchema), createBusinessListingController);
+router.post("/", decryptionMiddleware, validateRequest(createBusinessListingSchema), createBusinessListingController);
 
 // PATCH /api/businesses/:id - Update business listing (owner or admin)
-router.patch("/:id", validateRequest(updateBusinessListingSchema), businessOwnerMiddleware, updateBusinessListingController);
+router.patch("/:id", decryptionMiddleware, validateRequest(updateBusinessListingSchema), businessOwnerMiddleware, updateBusinessListingController);
 
 // DELETE /api/businesses/:id - Delete business listing (owner or admin)
 router.delete("/:id", businessOwnerMiddleware, deleteBusinessListingController);

@@ -6,6 +6,7 @@ import type { Application, Request, Response } from "express";
 import cors from "cors";
 import { generalRateLimit } from "./middlewares/rate-limit.middleware.js";
 import { requestLogger } from "./middlewares/logging.middleware.js";
+import { validateEncryptionKey } from "./lib/encryption.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -19,6 +20,15 @@ import statisticsRouter from "./routers/statistics.routes.js";
 
 const PORT: number = 8000;
 const app: Application = express();
+
+// Validate encryption key on startup
+if (!validateEncryptionKey()) {
+  console.error('❌ Invalid ENCRYPTION_KEY environment variable');
+  console.error('Please set a valid 32-byte base64-encoded encryption key');
+  process.exit(1);
+}
+
+console.log('✅ Encryption key validated successfully');
 
 app.use(express.json());
 app.use(cookieParser());

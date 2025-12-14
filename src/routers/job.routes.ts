@@ -14,6 +14,7 @@ import {
   updateJobPostingSchema,
   jobQuerySchema,
 } from "../types/job.types.js";
+import { decryptionMiddleware } from "../middlewares/decryption.middleware.js";
 
 const router = Router();
 
@@ -24,10 +25,10 @@ router.get("/", validateRequest(jobQuerySchema, "query"), getAllJobPostingsContr
 router.get("/:id", getJobPostingByIdController);
 
 // POST /api/jobs - Create new job posting (all authenticated users)
-router.post("/", validateRequest(createJobPostingSchema), createJobPostingController);
+router.post("/", decryptionMiddleware, validateRequest(createJobPostingSchema), createJobPostingController);
 
 // PATCH /api/jobs/:id - Update job posting (owner or admin)
-router.patch("/:id", validateRequest(updateJobPostingSchema), jobOwnerMiddleware, updateJobPostingController);
+router.patch("/:id", decryptionMiddleware, validateRequest(updateJobPostingSchema), jobOwnerMiddleware, updateJobPostingController);
 
 // DELETE /api/jobs/:id - Delete job posting (owner or admin)
 router.delete("/:id", jobOwnerMiddleware, deleteJobPostingController);
