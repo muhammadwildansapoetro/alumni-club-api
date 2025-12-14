@@ -4,6 +4,144 @@
 
 This guide provides API implementation instructions for Google OAuth authentication in the FTIP Unpad Alumni Club frontend application.
 
+**IMPORTANT**: The backend expects **Google ID Tokens** (JWT format), not access tokens or session identifiers. You must properly implement Google Sign-In to obtain valid ID tokens.
+
+**🚨 Google-Only Authentication**: This system uses Google OAuth exclusively. Email/password authentication has been disabled for enhanced security.
+
+---
+
+## 🚨 Critical: Google ID Token Requirements
+
+### What We Need vs What We Don't Need
+
+✅ **WE NEED: Google ID Token (JWT format)**
+```
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlNdkwM... (long string with 3 dots)
+```
+
+❌ **WE DON'T NEED:**
+- Session identifiers like: `google-auth-1765116596317`
+- OAuth access tokens
+- Authorization codes
+
+### How to Get Google ID Tokens
+
+#### Option 1: Google Sign-In for Web (Recommended)
+
+1. **Load Google Sign-In script:**
+```html
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+```
+
+2. **Initialize Google Sign-In:**
+```javascript
+function initializeGoogleSignIn() {
+  google.accounts.id.initialize({
+    client_id: "YOUR_GOOGLE_CLIENT_ID", // Get from backend .env file
+    callback: handleGoogleSignIn,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+
+  // Render the sign-in button
+  google.accounts.id.renderButton(
+    document.getElementById("google-signin-button"),
+    {
+      theme: "filled_blue",
+      size: "large",
+      text: "signin_with",
+      shape: "rectangular",
+      logo_alignment: "left"
+    }
+  );
+}
+
+// This callback receives the ID token
+function handleGoogleSignIn(response) {
+  // response.credential contains the Google ID token
+  const idToken = response.credential;
+
+  console.log("Received Google ID token:", idToken.substring(0, 50) + "...");
+
+  // Validate the token format
+  if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+    console.error("Invalid ID token format received");
+    return;
+  }
+
+  // Send the ID token to your backend
+  sendToBackend(idToken);
+}
+```
+
+#### Option 2: One Tap Sign-Up
+
+```javascript
+function initializeOneTap() {
+  google.accounts.id.initialize({
+    client_id: "YOUR_GOOGLE_CLIENT_ID",
+    callback: handleGoogleSignIn,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+
+  // Display One Tap
+  google.accounts.id.prompt();
+}
+```
+
+### Token Validation Checklist
+
+Before sending the token to backend:
+
+```javascript
+const validateGoogleIdToken = (token) => {
+  // 1. Check if it's a string
+  if (typeof token !== 'string') {
+    return false;
+  }
+
+  // 2. Check JWT format (3 segments separated by dots)
+  const segments = token.split('.');
+  if (segments.length !== 3) {
+    return false;
+  }
+
+  // 3. Check reasonable length (ID tokens are usually long)
+  if (token.length < 100) {
+    return false;
+  }
+
+  // 4. Basic base64 validation
+  try {
+    segments.forEach(segment => {
+      if (segment.length > 0) {
+        // Pad base64 if needed and try to decode
+        const padded = segment + '='.repeat((4 - segment.length % 4) % 4);
+        btoa(atob(padded));
+      }
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+// Usage
+function handleGoogleSignIn(response) {
+  const idToken = response.credential;
+
+  if (!validateGoogleIdToken(idToken)) {
+    console.error("Invalid Google ID token format");
+    alert("Invalid authentication token. Please try again.");
+    return;
+  }
+
+  // Token is valid, send to backend
+  sendToBackend(idToken);
+}
+```
+
 ## Base URL
 
 ```
@@ -12,16 +150,35 @@ http://localhost:8000
 
 ## Available Endpoints
 
-| Method | Endpoint                | Description                     |
-| ------ | ----------------------- | ------------------------------- |
-| `POST` | `/auth/google/register` | Register new user with Google   |
-| `POST` | `/auth/google`          | Login existing user with Google |
+| Method | Endpoint                   | Description                        |
+| ------ | -------------------------- | ---------------------------------- |
+| `GET`  | `/auth/google`             | Get Google OAuth URL               |
+| `POST` | `/auth/google`             | Login existing user with Google    |
+| `POST` | `/auth/google/register`    | Register new user with Google      |
+| `GET`  | `/auth/google/callback`    | Google OAuth callback (full flow)  |
 
 ---
 
 ## API Endpoints
 
-### 1. Register with Google
+### 1. Get Google Auth URL
+
+**Endpoint:** `GET /auth/google`
+
+Get Google OAuth URL for manual authentication flow.
+
+**Success Response (200):**
+
+```json
+{
+  "message": "Google OAuth URL generated",
+  "authUrl": "https://accounts.google.com/o/oauth2/v2/auth?..."
+}
+```
+
+---
+
+### 2. Register with Google
 
 **Endpoint:** `POST /auth/google/register`
 
@@ -61,15 +218,14 @@ Content-Type: application/json
       "email": "user@gmail.com",
       "name": "Google User Name",
       "role": "USER",
-      "authProvider": "GOOGLE",
-      "createdAt": "2024-12-07T10:00:00.000Z"
+      "createdAt": "2024-12-14T10:00:00.000Z"
     },
     "alumniProfile": {
       "id": "profile-uuid",
       "fullName": "Google User Name",
       "department": "TEP",
       "classYear": 2020,
-      "createdAt": "2024-12-07T10:00:00.000Z"
+      "createdAt": "2024-12-14T10:00:00.000Z"
     },
     "token": "jwt-token-for-session-management",
     "expiresIn": "7d"
@@ -99,21 +255,13 @@ Content-Type: application/json
 
 ```json
 {
-  "error": "Email sudah terdaftar dengan metode login biasa. Silakan login dengan password."
-}
-```
-
-**400 Bad Request - Google Account Already Exists:**
-
-```json
-{
-  "error": "Akun Google sudah terdaftar. Silakan login."
+  "error": "Email sudah terdaftar. Silakan login."
 }
 ```
 
 ---
 
-### 2. Login with Google
+### 3. Login with Google
 
 **Endpoint:** `POST /auth/google`
 
@@ -143,7 +291,6 @@ Content-Type: application/json
     "email": "user@gmail.com",
     "name": "Google User Name",
     "role": "USER",
-    "authProvider": "GOOGLE",
     "profile": {
       "id": "profile-uuid",
       "fullName": "Google User Name",
@@ -155,7 +302,7 @@ Content-Type: application/json
       "jobTitle": null,
       "companyName": null
     },
-    "createdAt": "2024-12-07T10:00:00.000Z"
+    "createdAt": "2024-12-14T10:00:00.000Z"
   },
   "token": "jwt-token-for-session-management"
 }
@@ -184,14 +331,6 @@ Content-Type: application/json
 ```json
 {
   "error": "Email Anda belum terdaftar di sistem FTIP Unpad Alumni Club. Silakan daftar terlebih dahulu melalui halaman pendaftaran."
-}
-```
-
-**400 Bad Request - Wrong Auth Method:**
-
-```json
-{
-  "error": "Email sudah terdaftar dengan metode login biasa. Silakan login dengan password."
 }
 ```
 
@@ -233,10 +372,18 @@ const registerWithGoogle = async (googleToken, registrationData) => {
   }
 };
 
-// Usage example:
-const handleGoogleRegistration = async (googleCredential) => {
+// Usage example - WITH PROPER GOOGLE SIGN-IN:
+const handleGoogleRegistration = async (googleSignInResponse) => {
   try {
-    const result = await registerWithGoogle(googleCredential, {
+    // ✅ Extract the ID token from Google Sign-In response
+    const idToken = googleSignInResponse.credential;
+
+    // ✅ Validate the token format before sending
+    if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+      throw new Error("Invalid Google ID token format");
+    }
+
+    const result = await registerWithGoogle(idToken, {
       department: "TEP",
       classYear: 2020,
     });
@@ -245,6 +392,7 @@ const handleGoogleRegistration = async (googleCredential) => {
     // Redirect to dashboard
     window.location.href = "/dashboard";
   } catch (error) {
+    console.error("Registration error:", error);
     alert(error.message);
   }
 };
@@ -282,15 +430,24 @@ const loginWithGoogle = async (googleToken) => {
   }
 };
 
-// Usage example:
-const handleGoogleLogin = async (googleCredential) => {
+// Usage example - WITH PROPER GOOGLE SIGN-IN:
+const handleGoogleLogin = async (googleSignInResponse) => {
   try {
-    const result = await loginWithGoogle(googleCredential);
+    // ✅ Extract the ID token from Google Sign-In response
+    const idToken = googleSignInResponse.credential;
+
+    // ✅ Validate the token format before sending
+    if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+      throw new Error("Invalid Google ID token format");
+    }
+
+    const result = await loginWithGoogle(idToken);
 
     console.log("Login successful:", result);
     // Redirect to dashboard
     window.location.href = "/dashboard";
   } catch (error) {
+    console.error("Login error:", error);
     alert(error.message);
   }
 };
@@ -347,13 +504,14 @@ const getUserProfile = async () => {
 
 ### Common Error Messages
 
-| Error Message                                     | Description                  | Suggested Action                 |
-| ------------------------------------------------- | ---------------------------- | -------------------------------- |
-| `Email Anda belum terdaftar`                      | Google email not in database | Redirect to registration         |
-| `Email sudah terdaftar dengan metode login biasa` | Email uses password auth     | Show password login option       |
-| `Akun Google sudah terdaftar`                     | Google account exists        | Redirect to login                |
-| `Google token verification failed`                | Invalid Google token         | Ask user to retry Google sign-in |
-| `Email belum diverifikasi oleh Google`            | Email not verified by Google | Ask user to verify email first   |
+| Error Message                                     | Description                               | Suggested Action                  |
+| ------------------------------------------------- | ----------------------------------------- | -------------------------------- |
+| `Email Anda belum terdaftar`                      | Google email not in database              | Redirect to registration          |
+| `Email sudah terdaftar`                           | Email already exists                      | Redirect to login                 |
+| `Google token verification failed`                | Invalid Google token                      | Ask user to retry Google sign-in  |
+| `Email belum diverifikasi oleh Google`            | Email not verified by Google              | Ask user to verify email first    |
+| `Invalid token format. Expected Google JWT ID token` | Wrong token format received              | Fix frontend Google Sign-In       |
+| `Wrong number of segments in token`               | Session identifier instead of ID token    | Fix frontend to extract proper ID token |
 
 ### Error Handling Implementation
 
@@ -362,14 +520,18 @@ const handleAuthError = (error) => {
   const errorMessages = {
     "Email Anda belum terdaftar":
       "Your Google account is not registered. Please register first.",
-    "Email sudah terdaftar dengan metode login biasa":
-      "This email uses password login. Please use password login.",
-    "Akun Google sudah terdaftar":
+    "Email sudah terdaftar":
       "Google account already exists. Please use login instead.",
     "Email belum diverifikasi oleh Google":
       "Please verify your email with Google first.",
     "Google token verification failed":
       "Invalid Google token. Please try signing in again.",
+    "Invalid token format. Expected Google JWT ID token":
+      "Authentication error. Please use Google Sign-In button to authenticate.",
+    "Wrong number of segments in token":
+      "Invalid authentication token. Please use the Google Sign-In button.",
+    "This appears to be a session identifier":
+      "Authentication error. Please ensure you're using Google Sign-In properly.",
   };
 
   const userMessage = errorMessages[error.message] || error.message;
@@ -380,6 +542,10 @@ const handleAuthError = (error) => {
     window.location.href = "/register";
   } else if (error.message.includes("sudah terdaftar")) {
     window.location.href = "/login";
+  } else if (error.message.includes("token") || error.message.includes("session")) {
+    // Token format errors - reload page to reset auth state
+    console.error("Token format error detected:", error.message);
+    window.location.reload();
   }
 };
 ```
@@ -452,69 +618,46 @@ const validateToken = () => {
 
 ---
 
-## API Response Format
+## Database Schema
 
-### Success Response Structure
+### User Model
 
-```javascript
-// Registration success response format
-const registrationResponse = {
-  success: true,
-  message:
-    "Pendaftaran dengan Google berhasil! Selamat bergabung dengan FTIP Unpad Alumni Club.",
-  data: {
-    user: {
-      id: "string",
-      email: "string",
-      name: "string",
-      role: "USER",
-      authProvider: "GOOGLE",
-      createdAt: "ISO-date",
-    },
-    alumniProfile: {
-      id: "string",
-      fullName: "string",
-      department: "TEP|TPN|TIN",
-      classYear: "number",
-      createdAt: "ISO-date",
-    },
-    token: "JWT-string",
-    expiresIn: "7d",
-  },
-};
+The User model now contains only Google authentication fields:
 
-// Login success response format
-const loginResponse = {
-  message: "Login dengan Google berhasil",
-  user: {
-    id: "string",
-    email: "string",
-    name: "string",
-    role: "USER",
-    authProvider: "GOOGLE",
-    profile: {
-      id: "string",
-      fullName: "string",
-      department: "TEP|TPN|TIN",
-      classYear: "number",
-      city: "string|null",
-      industry: "string|null",
-      employmentLevel: "string|null",
-      jobTitle: "string|null",
-      companyName: "string|null",
-    },
-    createdAt: "ISO-date",
-  },
-  token: "JWT-string",
-};
+```typescript
+interface User {
+  id: string;                    // Primary key
+  email: string;                 // User's email (unique)
+  name: string | null;           // User's name from Google
+  googleId: string | null;       // Google ID (unique)
+  role: 'USER' | 'ADMIN';        // User role
+  deletedAt: Date | null;        // Soft delete timestamp
+  createdAt: Date;               // Account creation date
+  updatedAt: Date;               // Last update date
+}
 ```
 
-### Error Response Format
+### AlumniProfile Model
 
-```javascript
-const errorResponse = {
-  error: "Error message string",
-};
+Extended profile information for alumni:
+
+```typescript
+interface AlumniProfile {
+  id: string;                    // Primary key
+  userId: string;                // Foreign key to User
+  fullName: string;              // Full name
+  department: 'TEP' | 'TPN' | 'TIN';  // FTIP department
+  classYear: number;             // Class year
+  city: string | null;           // Current city
+  industry: string | null;       // Industry field
+  employmentLevel: string | null;  // Employment level
+  incomeRange: string | null;    // Income range
+  jobTitle: string | null;       // Current job title
+  companyName: string | null;    // Current company
+  linkedInUrl: string | null;    // LinkedIn profile URL
+  createdAt: Date;
+  updatedAt: Date;
+}
 ```
 
 ---
@@ -573,11 +716,99 @@ const testLogin = async () => {
 
 ---
 
+## Security Notes
+
+### Google Token Verification
+
+The backend implements robust Google token verification:
+
+1. **Token Format Validation**: Validates JWT structure and segments
+2. **Google OAuth2 Verification**: Uses Google's official OAuth2 client library
+3. **Token Expiration**: Checks token expiration time
+4. **Email Verification**: Ensures Google account email is verified
+5. **Audience Validation**: Verifies token matches client ID
+6. **Issuer Validation**: Ensures token is from Google
+
+### Session Management
+
+- **JWT Tokens**: Backend issues signed JWT tokens for session management
+- **7-Day Expiration**: Tokens expire after 7 days for security
+- **Bearer Authentication**: Use `Authorization: Bearer <token>` header
+- **Auto-Logout**: Frontend should handle 401 responses and logout users
+
+### Rate Limiting
+
+The API implements rate limiting for security:
+
+- **General**: 100 requests per 15 minutes
+- **Authentication**: 15 requests per 5 minutes
+- **Admin**: 50 requests per 15 minutes
+
+---
+
 ## Summary
 
-The Google Authentication API provides two main endpoints:
+The Google Authentication API provides a secure, Google-only authentication system with the following endpoints:
 
-1. **`POST /auth/google/register`** - For new users (requires department and classYear)
-2. **`POST /auth/google`** - For existing Google users
+1. **`GET /auth/google`** - Get Google OAuth URL (optional for manual flow)
+2. **`POST /auth/google`** - Login existing Google users
+3. **`POST /auth/google/register`** - Register new Google users (requires department and classYear)
+4. **`GET /auth/google/callback`** - OAuth callback (for full flow)
 
-Both endpoints require a Google ID token and return JWT tokens for session management. Store tokens securely and handle the various error scenarios appropriately.
+### 🚨 CRITICAL REMINDERS
+
+1. **Use Google Sign-In for Web** - Load `https://accounts.google.com/gsi/client`
+2. **Extract `response.credential`** - This contains the Google ID token
+3. **Validate JWT format** - Must have 3 segments separated by dots
+4. **NEVER send session identifiers** - Tokens like `google-auth-1765116596317` will fail
+5. **Store tokens securely** and handle various error scenarios appropriately
+
+### Quick Implementation Checklist
+
+- [ ] Load Google Sign-In script
+- [ ] Initialize with correct `client_id`
+- [ ] Extract `response.credential` from callback
+- [ ] Validate JWT format before sending
+- [ ] Send only the ID token to backend
+- [ ] Handle authentication errors properly
+- [ ] Store returned JWT securely
+- [ ] Use Bearer token for authenticated requests
+
+### Debugging Tips
+
+If you encounter "google-auth-*" errors:
+1. Check console logs for token format validation
+2. Ensure you're using `response.credential` from Google Sign-In
+3. Verify the token is a JWT (3 segments with dots)
+4. Make sure Google Sign-In is properly initialized
+
+**Working Example:**
+```javascript
+function handleGoogleSignIn(response) {
+  const idToken = response.credential; // ✅ Correct
+  if (idToken && idToken.includes('.') && idToken.split('.').length === 3) {
+    sendToBackend(idToken); // ✅ This works
+  }
+}
+```
+
+---
+
+## Migration from Email/Password Auth
+
+The system has been migrated from mixed authentication (email/password + Google) to Google-only authentication:
+
+### Removed Features:
+- Email/password registration
+- Email/password login
+- Password change functionality
+- `authProvider` field tracking
+- Password-related database fields
+
+### Current Features:
+- Google OAuth authentication only
+- JWT session management
+- Secure token verification
+- Enhanced security posture
+
+This migration significantly improves security and simplifies the authentication flow while maintaining full functionality through Google's trusted authentication system.

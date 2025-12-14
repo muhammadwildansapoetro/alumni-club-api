@@ -6,7 +6,6 @@ import {
   getAlumniDirectoryService,
   updateUserRoleService,
   updateUserProfileService,
-  updateUserPasswordService,
   softDeleteUserService,
   restoreUserService,
   getDeletedUsersService,
@@ -215,72 +214,6 @@ export const updateUserProfileByAdminController = async (
   }
 };
 
-// PUT /api/users/:id/password - Update kata sandi pengguna (pemilik atau admin)
-export const resetUserPasswordByAdminController = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: "ID tidak boleh kosong",
-      });
-    }
-
-    const user = (req as any).user;
-    const { currentPassword, newPassword } = req.body;
-
-    if (!newPassword || newPassword.length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: "Kata sandi baru minimal 8 karakter",
-      });
-    }
-
-    // Jika bukan admin, wajib menyertakan currentPassword
-    if (user.role !== "ADMIN" && !currentPassword) {
-      return res.status(400).json({
-        success: false,
-        error: "Kata sandi saat ini diperlukan",
-      });
-    }
-
-    const result = await updateUserPasswordService(
-      id,
-      currentPassword,
-      newPassword,
-      user.id,
-      user.role
-    );
-
-    res.json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    console.error("Error di updateUserPasswordController:", error);
-    const statusCode =
-      error instanceof Error &&
-      (error.message === "Pengguna tidak ditemukan" ||
-        error.message ===
-          "Akses ditolak - Anda hanya dapat memperbarui kata sandi Anda sendiri" ||
-        error.message === "Kata sandi saat ini diperlukan" ||
-        error.message === "Kata sandi saat ini salah" ||
-        error.message ===
-          "Tidak dapat memperbarui kata sandi untuk pengguna Google")
-        ? 400
-        : 500;
-
-    res.status(statusCode).json({
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Terjadi kesalahan internal",
-    });
-  }
-};
 
 // DELETE /api/users/:id - Soft delete pengguna (hanya admin)
 export const softDeleteUserController = async (req: Request, res: Response) => {
@@ -383,21 +316,13 @@ export const getDeletedUsersController = async (
 // POST /api/users - Buat pengguna baru (hanya admin)
 export const createUserController = async (req: Request, res: Response) => {
   try {
-    const { email, name, password, role, department, classYear, fullName } =
-      req.body;
+    const { email, name, role, department, classYear, fullName } = req.body;
 
     // Validasi input
     if (!email || !name || !department || !classYear) {
       return res.status(400).json({
         success: false,
         error: "Email, nama, department, dan classYear wajib diisi",
-      });
-    }
-
-    if (password && password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: "Password minimal 8 karakter",
       });
     }
 
@@ -429,7 +354,6 @@ export const createUserController = async (req: Request, res: Response) => {
     const result = await createUserService({
       email: email.toLowerCase(),
       name,
-      password,
       role: userRole,
       department: department.toUpperCase(),
       classYear: classYearNum,
@@ -568,59 +492,3 @@ export const updateCurrentUserProfileController = async (
   }
 };
 
-// PATCH /api/users/password - Update kata sandi sendiri (authenticated user)
-export const changeCurrentUserPasswordController = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const user = (req as AuthenticatedRequest).user;
-    const { currentPassword, newPassword } = req.body;
-
-    if (!newPassword || newPassword.length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: "Kata sandi baru minimal 8 karakter",
-      });
-    }
-
-    // Current password wajib untuk user yang mengganti password sendiri
-    if (!currentPassword) {
-      return res.status(400).json({
-        success: false,
-        error: "Kata sandi saat ini diperlukan",
-      });
-    }
-
-    const result = await updateUserPasswordService(
-      user.id,
-      currentPassword,
-      newPassword,
-      user.id,
-      user.role
-    );
-
-    res.json({
-      success: true,
-      message: "Berhasil memperbarui kata sandi",
-      data: result,
-    });
-  } catch (error) {
-    console.error("Error di updateOwnPasswordController:", error);
-    if (
-      error instanceof Error &&
-      (error.message === "Pengguna tidak ditemukan" ||
-        error.message === "Kata sandi saat ini salah")
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: error.message,
-      });
-    }
-    res.status(500).json({
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Terjadi kesalahan internal",
-    });
-  }
-};

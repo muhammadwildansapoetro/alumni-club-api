@@ -1,5 +1,4 @@
 import { prisma } from "../lib/prisma.ts";
-import bcrypt from "bcryptjs";
 import csv from "csv-parser";
 import fs from "fs";
 import type { UserRole } from "../../generated/prisma/index.js";
@@ -11,7 +10,6 @@ interface AlumniCSVRow {
   fullName?: string;
   department: string;
   classYear: string;
-  password?: string;
   role?: string;
 }
 
@@ -34,7 +32,6 @@ export const getAllUsersService = async (
         email: true,
         name: true,
         role: true,
-        authProvider: true,
         profile: {
           select: {
             id: true,
@@ -83,7 +80,6 @@ export const getUserByIdService = async (userId: string) => {
       email: true,
       name: true,
       role: true,
-      authProvider: true,
       profile: {
         select: {
           id: true,
@@ -213,7 +209,6 @@ export const updateUserRoleService = async (userId: string, role: UserRole) => {
       email: true,
       name: true,
       role: true,
-      authProvider: true,
       profile: {
         select: {
           id: true,
@@ -299,7 +294,6 @@ export const updateUserProfileService = async (
         email: true,
         name: true,
         role: true,
-        authProvider: true,
       },
     });
 
@@ -334,67 +328,6 @@ export const updateUserProfileService = async (
   return updatedUser;
 };
 
-// UPDATE - Perbarui kata sandi pengguna (hanya pemilik profil atau admin)
-export const updateUserPasswordService = async (
-  userId: string,
-  currentPassword: string,
-  newPassword: string,
-  requestingUserId: string,
-  requestingUserRole: UserRole
-) => {
-  // Periksa apakah pengguna memiliki izin (pemilik profil atau admin)
-  const isOwner = requestingUserId === userId;
-  const isAdmin = requestingUserRole === "ADMIN";
-
-  if (!isOwner && !isAdmin) {
-    throw new Error(
-      "Akses ditolak - Anda hanya dapat memperbarui kata sandi Anda sendiri"
-    );
-  }
-
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      id: userId,
-      deletedAt: null,
-    },
-  });
-
-  if (!existingUser) {
-    throw new Error("Pengguna tidak ditemukan");
-  }
-
-  if (existingUser.authProvider !== "EMAIL") {
-    throw new Error("Tidak dapat memperbarui kata sandi untuk pengguna Google");
-  }
-
-  // Jika bukan admin, verifikasi kata sandi saat ini
-  if (!isAdmin) {
-    if (!existingUser.password) {
-      throw new Error("Kata sandi saat ini diperlukan");
-    }
-
-    const isCurrentPasswordValid = await bcrypt.compare(
-      currentPassword,
-      existingUser.password
-    );
-    if (!isCurrentPasswordValid) {
-      throw new Error("Kata sandi saat ini salah");
-    }
-  }
-
-  if (!newPassword || newPassword.length < 8) {
-    throw new Error("Kata sandi baru minimal 8 karakter");
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { password: hashedPassword },
-  });
-
-  return { message: "Kata sandi berhasil diperbarui" };
-};
 
 // DELETE - Soft delete pengguna (hanya admin)
 export const softDeleteUserService = async (userId: string) => {
@@ -462,7 +395,6 @@ export const getDeletedUsersService = async (
         email: true,
         name: true,
         role: true,
-        authProvider: true,
         deletedAt: true,
         profile: {
           select: {
@@ -498,7 +430,6 @@ export const getDeletedUsersService = async (
 export const createUserService = async (data: {
   email: string;
   name: string;
-  password?: string;
   role: UserRole;
   department: string;
   classYear: number;
@@ -513,23 +444,12 @@ export const createUserService = async (data: {
     throw new Error("Email sudah terdaftar");
   }
 
-  // Hash password jika disediakan
-  let hashedPassword = null;
-  if (data.password) {
-    if (data.password.length < 8) {
-      throw new Error("Password minimal 8 karakter");
-    }
-    hashedPassword = await bcrypt.hash(data.password, 10);
-  }
-
   const result = await prisma.$transaction(async (tx) => {
     // Create User
     const user = await tx.user.create({
       data: {
         email: data.email,
         name: data.name,
-        password: hashedPassword,
-        authProvider: data.password ? "EMAIL" : "GOOGLE",
         role: data.role,
       },
     });
@@ -677,25 +597,12 @@ export const importAlumniFromCSVService = async (
                 continue;
               }
 
-              // Hash password jika ada
-              let hashedPassword = null;
-              if (row.password) {
-                if (row.password.length < 8) {
-                  errors.push(`Baris ${rowNum}: Password minimal 8 karakter`);
-                  failedCount++;
-                  continue;
-                }
-                hashedPassword = await bcrypt.hash(row.password, 10);
-              }
-
               // Create user dan alumni profile
               await prisma.$transaction(async (tx) => {
                 const user = await tx.user.create({
                   data: {
                     email: row.email,
                     name: row.name,
-                    password: hashedPassword,
-                    authProvider: row.password ? "EMAIL" : "GOOGLE",
                     role: role,
                   },
                 });
@@ -780,7 +687,7 @@ export const validateCSVTemplateService = async (
         }
 
         const requiredFields = ["email", "name", "department", "classYear"];
-        const optionalFields = ["fullName", "password", "role"];
+        const optionalFields = ["fullName", "role"];
 
         const missingFields = requiredFields.filter(
           (field) => !(field in firstRow)

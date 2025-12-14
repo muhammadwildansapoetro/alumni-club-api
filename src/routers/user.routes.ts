@@ -17,9 +17,7 @@ import {
   importAlumniFromCSVController,
   validateCSVTemplateController,
   updateUserProfileByAdminController,
-  resetUserPasswordByAdminController,
   updateCurrentUserProfileController,
-  changeCurrentUserPasswordController,
 } from "../controllers/user.controller.js";
 import {
   uploadCSVSingle,
@@ -28,9 +26,8 @@ import {
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   updateUserProfileSchema,
-  updatePasswordSchema,
 } from "../types/user.types.js";
-import { profileDecryptionMiddleware, authDecryptionMiddleware } from "../middlewares/decryption.middleware.js";
+import { profileDecryptionMiddleware } from "../middlewares/decryption.middleware.js";
 
 const router = Router();
 
@@ -51,12 +48,6 @@ router.patch(
   profileDecryptionMiddleware,
   validateRequest(updateUserProfileSchema),
   updateCurrentUserProfileController
-);
-router.patch(
-  "/password",
-  authDecryptionMiddleware,
-  validateRequest(updatePasswordSchema),
-  changeCurrentUserPasswordController
 );
 
 // Admin routes
@@ -88,16 +79,11 @@ router.put("/admin/:id/role", adminRateLimit, updateUserRoleController);
 router.put("/admin/:id/restore", adminRateLimit, restoreUserController);
 router.delete("/admin/:id", adminRateLimit, softDeleteUserController);
 
-// Admin profile/password update (acting on a specific user)
+// Admin profile update (acting on a specific user)
 router.patch(
   "/admin/:id/profile",
   adminRateLimit,
   updateUserProfileByAdminController
-);
-router.patch(
-  "/admin/:id/password",
-  adminRateLimit,
-  resetUserPasswordByAdminController
 );
 
 export default router;

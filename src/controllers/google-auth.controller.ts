@@ -58,7 +58,6 @@ export const googleRegisterController = async (req: Request, res: Response) => {
           email: user.email,
           name: user.name,
           role: user.role,
-          authProvider: user.authProvider,
           createdAt: user.createdAt,
         },
         alumniProfile: {

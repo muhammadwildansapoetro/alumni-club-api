@@ -13,6 +13,45 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI
 );
 
+// Helper function to identify token type
+function identifyTokenType(token: string): string {
+  // Check if it's a JWT (3 segments separated by dots)
+  if (token.includes('.') && token.split('.').length === 3) {
+    return 'JWT ID Token';
+  }
+
+  // Check if it looks like a session identifier (alphanumeric with timestamp)
+  if (/^[a-zA-Z0-9]+-[0-9]+$/.test(token)) {
+    return 'Session Identifier';
+  }
+
+  // Check if it's a Google OAuth access token (usually longer and alphanumeric)
+  if (/^[a-zA-Z0-9_-]+$/.test(token) && token.length > 20) {
+    return 'Access Token';
+  }
+
+  // Check if it's an authorization code (usually shorter)
+  if (/^[a-zA-Z0-9/_-]+$/.test(token) && token.length < 50) {
+    return 'Authorization Code';
+  }
+
+  return 'Unknown Token Type';
+}
+
+// Helper function to provide suggestions based on token type
+function getErrorMessageForTokenType(tokenType: string): string {
+  switch (tokenType) {
+    case 'Session Identifier':
+      return 'This appears to be a session identifier, not a Google ID token. Make sure your frontend is extracting the ID token from Google Sign-In response.';
+    case 'Access Token':
+      return 'This appears to be an OAuth access token, not an ID token. Please use the ID token from Google Sign-In.';
+    case 'Authorization Code':
+      return 'This appears to be an authorization code. You need to exchange it for an ID token first, or use Google Sign-In to get ID tokens directly.';
+    default:
+      return 'Please ensure your frontend is using Google Sign-In to obtain proper ID tokens in JWT format.';
+  }
+}
+
 interface GoogleUserInfo {
   id: string;
   email: string;
@@ -25,6 +64,23 @@ export const verifyGoogleToken = async (
   token: string
 ): Promise<GoogleUserInfo> => {
   try {
+    // Debug logging to identify token format
+    const tokenType = identifyTokenType(token);
+    console.log('Token received:', {
+      token: token.substring(0, 20) + '...',
+      tokenLength: token.length,
+      tokenType: typeof token,
+      identifiedAs: tokenType,
+      hasDots: token.includes('.'),
+      segments: token.split('.').length
+    });
+
+    // Check if token looks like a JWT (should have 3 segments separated by dots)
+    if (!token.includes('.') || token.split('.').length !== 3) {
+      const suggestions = getErrorMessageForTokenType(tokenType);
+      throw new Error(`Invalid token format. Expected Google JWT ID token with 3 segments, but received ${tokenType}. ${suggestions}`);
+    }
+
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -85,19 +141,12 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
   });
 
   if (user) {
-    if (user.authProvider === "EMAIL") {
-      throw new Error(
-        "Email sudah terdaftar dengan metode login biasa. Silakan login dengan password."
-      );
-    }
-
     // Update existing user with Google info (user was previously registered)
     user = await prisma.user.update({
       where: { id: user.id },
       data: {
         googleId,
         name: name || user.name,
-        authProvider: "GOOGLE",
       },
       include: { profile: true },
     });
@@ -147,14 +196,7 @@ export const googleRegisterService = async (googleUserInfo: GoogleUserInfo, depa
   });
 
   if (existingUser) {
-    if (existingUser.authProvider === "EMAIL") {
-      throw new Error(
-        "Email sudah terdaftar dengan metode login biasa. Silakan login dengan password."
-      );
-    }
-    if (existingUser.authProvider === "GOOGLE") {
-      throw new Error("Akun Google sudah terdaftar. Silakan login.");
-    }
+    throw new Error("Email sudah terdaftar. Silakan login.");
   }
 
   // Create new user and alumni profile with Google info
@@ -165,7 +207,6 @@ export const googleRegisterService = async (googleUserInfo: GoogleUserInfo, depa
         email,
         name,
         googleId,
-        authProvider: "GOOGLE",
         role: "USER",
       },
     });

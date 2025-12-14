@@ -8,13 +8,85 @@ datasource db {
   provider = "postgresql"
 }
 
-// ENUMS
+model User {
+  id               String              @id @default(cuid())
+  email            String              @unique
+  name             String?
+  googleId         String?             @unique
+  role             UserRole            @default(USER)
+  deletedAt        DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  profile          AlumniProfile?
+  businessListings BusinessDirectory[]
+  jobPostings      JobPosting[]
+}
+
+model AlumniProfile {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  fullName        String
+  department      Department
+  classYear       Int
+  city            String?
+  industry        IndustryField?
+  employmentLevel EmploymentLevel?
+  incomeRange     IncomeRange?
+  jobTitle        String?
+  companyName     String?
+  linkedInUrl     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  user            User             @relation(fields: [userId], references: [id])
+}
+
+model JobPosting {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  company     String?
+  location    String?
+  jobType     String?
+  salaryRange String?
+  externalUrl String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model BusinessDirectory {
+  id           String   @id @default(cuid())
+  userId       String
+  businessName String
+  description  String
+  category     String?
+  location     String?
+  website      String?
+  contactInfo  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Statistics {
+  id           String         @id @default(cuid())
+  type         StatisticsType @unique
+  alumniData   Json?
+  jobData      Json?
+  businessData Json?
+  totalItems   Int            @default(0)
+  lastUpdated  DateTime       @default(now())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
 
 enum UserRole {
   USER
   ADMIN
 }
-
 
 enum Department {
   TEP
@@ -43,7 +115,6 @@ enum IncomeRange {
   UNKNOWN
 }
 
-// could be improved later
 enum IndustryField {
   AGRICULTURE
   FOOD_TECH
@@ -59,112 +130,8 @@ enum IndustryField {
   OTHER
 }
 
-// USER (Auth base)
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  googleId  String?  @unique
-  role      UserRole @default(USER)
-  deletedAt DateTime?
-
-  profile          AlumniProfile?
-  jobPostings      JobPosting[]
-  businessListings BusinessDirectory[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// ALUMNI PROFILE (Main Data)
-
-model AlumniProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-
-  fullName   String
-  department Department
-  classYear  Int
-  city       String?
-
-  industry        IndustryField?
-  employmentLevel EmploymentLevel?
-  incomeRange     IncomeRange?
-  jobTitle        String?
-  companyName     String?
-
-  linkedInUrl String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// JOB POSTING
-
-model JobPosting {
-  id          String @id @default(cuid())
-  userId      String
-  user        User   @relation(fields: [userId], references: [id])
-
-  title       String
-  description String
-  company     String?
-  location    String?
-  jobType     String?      // remote, hybrid, onsite
-  salaryRange String?
-  externalUrl String?
-  isActive    Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// BUSINESS DIRECTORY
-
-model BusinessDirectory {
-  id          String @id @default(cuid())
-  userId      String
-  user        User   @relation(fields: [userId], references: [id])
-
-  businessName String
-  description  String
-  category     String?
-  location     String?
-  website      String?
-  contactInfo  String?
-  isActive     Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// STATISTICS
-
 enum StatisticsType {
   ALUMNI
   JOB_POSTINGS
   BUSINESS_POSTINGS
-}
-
-model Statistics {
-  id     String @id @default(cuid())
-  type   StatisticsType @unique
-
-  // Alumni specific fields
-  alumniData Json?  // Contains all alumni-specific statistics
-
-  // Job posting specific fields
-  jobData Json?     // Contains all job posting statistics
-
-  // Business posting specific fields
-  businessData Json? // Contains all business posting statistics
-
-  // Common fields
-  totalItems    Int @default(0)
-  lastUpdated   DateTime @default(now())
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
