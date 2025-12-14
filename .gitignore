@@ -38,6 +38,7 @@ report.[0-9]_[0-9]_[0-9]_[0-9].json
 
 # Project documentation (confidential)
 CLAUDE.md
+docs/
 
 # Security and configuration files
 *.key

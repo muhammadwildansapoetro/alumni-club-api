@@ -26,7 +26,7 @@ export function encrypt(plaintext: string): string {
     const derivedKey = crypto.pbkdf2Sync(key, salt, PBKDF2_ITERATIONS, 32, 'sha256');
 
     const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipher(ENCRYPTION_ALGORITHM, derivedKey);
+    const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, derivedKey, iv);
     cipher.setAAD(Buffer.from('FTIP-Alumni-Club', 'utf8'));
 
     let encrypted = cipher.update(plaintext, 'utf8', 'hex');
@@ -63,7 +63,7 @@ export function decrypt(encryptedData: string): string {
     // Derive key using PBKDF2 (matching frontend)
     const derivedKey = crypto.pbkdf2Sync(key, salt, PBKDF2_ITERATIONS, 32, 'sha256');
 
-    const decipher = crypto.createDecipher(ENCRYPTION_ALGORITHM, derivedKey);
+    const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, derivedKey, iv);
     decipher.setAuthTag(tag);
     decipher.setAAD(Buffer.from('FTIP-Alumni-Club', 'utf8'));
 
