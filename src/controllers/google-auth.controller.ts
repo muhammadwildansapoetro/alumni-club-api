@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { verifyGoogleToken, googleAuthService, googleRegisterService, getGoogleAuthUrl } from '../services/google-auth.service.js';
 import { googleAuthSchema, googleRegisterSchema } from '../types/auth.types.js';
 
-export const getGoogleAuthController = (req: Request, res: Response) => {
+export const getGoogleAuthController = (_req: Request, res: Response) => {
   try {
     const authUrl = getGoogleAuthUrl();
 

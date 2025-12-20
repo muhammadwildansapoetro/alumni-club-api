@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { UserRole } from "../../generated/prisma/index.js";
 
 // Create user schema (admin only)
 export const createUserSchema = z.object({

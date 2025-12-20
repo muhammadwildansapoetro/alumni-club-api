@@ -11,10 +11,10 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Konfigurasi storage untuk multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, file, cb) => {
     cb(null, uploadsDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     // Buat nama file unik dengan timestamp dan random string untuk keamanan
     const timestamp = Date.now();
     const randomString = crypto.randomBytes(8).toString('hex');

@@ -58,22 +58,3 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   next();
 };
 
-// Sensitive operation logger
-export const sensitiveOperationLogger = (operation: string) => {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    const requestId = (req as any).requestId || 'unknown';
-    const user = (req as any).user?.id || 'anonymous';
-    const ip = req.ip || req.socket.remoteAddress || 'Unknown';
-
-    console.warn(`[${new Date().toISOString()}] [${requestId}] SENSITIVE OPERATION: ${operation}`, {
-      user,
-      ip,
-      method: req.method,
-      url: req.originalUrl,
-      params: req.params,
-      body: req.body // Log body for sensitive operations for audit trail
-    });
-
-    next();
-  };
-};

@@ -51,45 +51,51 @@ export const googleRegisterSchema = z.object({
     ),
 });
 
-// Schema for completing alumni profile after Google login
-export const completeProfileSchema = z.object({
-  department: DepartmentEnum,
-  classYear: z
-    .number()
-    .int("Tahun angkatan harus berupa angka bulat")
-    .min(1983, "Tahun angkatan tidak valid")
-    .max(
-      new Date().getFullYear(),
-      "Tahun angkatan tidak boleh melebihi tahun ini"
+// Schema for forgot password
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Format email tidak valid"),
+});
+
+// Schema for reset password
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token reset password wajib diisi"),
+  password: z
+    .string()
+    .min(8, "Password minimal 8 karakter")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password harus mengandung huruf besar, huruf kecil, dan angka"
     ),
-  city: z.string().optional(),
-  industry: z.enum([
-    "AGRICULTURE", "FOOD_TECH", "BIOTECH", "RESEARCH", "EDUCATION",
-    "ENGINEERING", "BUSINESS", "MARKETING", "FINANCE", "GOVERNMENT",
-    "FREELANCE", "OTHER"
-  ]).optional(),
-  employmentLevel: z.enum([
-    "INTERN", "STAFF", "SUPERVISOR", "MANAGER", "SENIOR_MANAGER",
-    "DIRECTOR", "VP", "C_LEVEL", "FOUNDER", "OTHER"
-  ]).optional(),
-  incomeRange: z.enum([
-    "BELOW_5M", "RANGE_5_10M", "RANGE_10_20M", "ABOVE_20M", "UNKNOWN"
-  ]).optional(),
-  jobTitle: z.string().optional(),
-  companyName: z.string().optional(),
-  linkedInUrl: z.string().optional().refine((val) => {
-    if (!val || val === "") return true;
-    try {
-      new URL(val);
-      return true;
-    } catch {
-      return false;
-    }
-  }, { message: "Format URL tidak valid" }),
+});
+
+// Schema for change password
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Password saat ini wajib diisi"),
+  newPassword: z
+    .string()
+    .min(8, "Password baru minimal 8 karakter")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password baru harus mengandung huruf besar, huruf kecil, dan angka"
+    ),
+});
+
+// Schema for resend verification email
+export const resendVerificationSchema = z.object({
+  email: z.string().email("Format email tidak valid"),
+});
+
+// Schema for email verification (token from query params)
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token verifikasi wajib diisi"),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
 export type GoogleRegisterInput = z.infer<typeof googleRegisterSchema>;
-export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

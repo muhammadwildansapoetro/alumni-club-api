@@ -38,33 +38,6 @@ export const decryptionMiddleware = (req: Request, res: Response, next: NextFunc
   }
 };
 
-// Middleware to decrypt specific authentication fields
-export const authDecryptionMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // Validate encryption key
-  if (!validateEncryptionKey()) {
-    return res.status(500).json({
-      success: false,
-      error: 'Server encryption configuration error'
-    });
-  }
-
-  try {
-    // Authentication-specific sensitive fields
-    const authFields = ['email', 'password', 'name', 'token', 'googleId'];
-
-    if (req.body && typeof req.body === 'object') {
-      req.body = decryptFields(req.body, authFields);
-    }
-
-    next();
-  } catch (error) {
-    console.error('Auth decryption middleware error:', error);
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid authentication data format'
-    });
-  }
-};
 
 // Middleware for profile data decryption
 export const profileDecryptionMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -102,20 +75,3 @@ export const profileDecryptionMiddleware = (req: Request, res: Response, next: N
   }
 };
 
-// Middleware to detect and log encryption attempts (for debugging)
-export const encryptionLoggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const hasEncryptedFields = Object.entries(req.body).some(([key, value]) => {
-    if (typeof value === 'string' && value.length > 100 && /^[A-Za-z0-9+/=]+$/.test(value)) {
-      return SENSITIVE_FIELDS.includes(key);
-    }
-    return false;
-  });
-
-  if (hasEncryptedFields) {
-    console.log(`[${new Date().toISOString()}] Encrypted data detected in ${req.method} ${req.path}`, {
-      encryptedFields: Object.keys(req.body).filter(key => SENSITIVE_FIELDS.includes(key))
-    });
-  }
-
-  next();
-};

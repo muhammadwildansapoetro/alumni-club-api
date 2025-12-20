@@ -9,17 +9,24 @@ datasource db {
 }
 
 model User {
-  id               String              @id @default(cuid())
-  email            String              @unique
-  name             String?
-  googleId         String?             @unique
-  role             UserRole            @default(USER)
-  deletedAt        DateTime?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  profile          AlumniProfile?
-  businessListings BusinessDirectory[]
-  jobPostings      JobPosting[]
+  id                       String              @id @default(cuid())
+  email                    String              @unique
+  name                     String?
+  password                 String?             // For email/password authentication
+  googleId                 String?             @unique  // For Google OAuth
+  authMethod               AuthMethod          @default(EMAIL)
+  role                     UserRole            @default(USER)
+  emailVerified            Boolean             @default(false)
+  emailVerificationToken   String?             @unique
+  emailVerificationExpires DateTime?
+  passwordResetToken       String?             @unique
+  passwordResetExpires     DateTime?
+  deletedAt                DateTime?
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+  profile                  AlumniProfile?
+  businessListings         BusinessDirectory[]
+  jobPostings              JobPosting[]
 }
 
 model AlumniProfile {
@@ -86,6 +93,12 @@ model Statistics {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum AuthMethod {
+  EMAIL
+  GOOGLE
+  BOTH
 }
 
 enum Department {

@@ -12,7 +12,6 @@ import type {
   AllStatsDashboardResponse,
   RefreshOptions,
 } from "../types/statistics.types.js";
-import type { StatisticsType } from "../../generated/prisma/index.js";
 
 // Helper function to calculate class year range
 const getClassYearRange = (classYear: number) => {

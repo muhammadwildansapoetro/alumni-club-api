@@ -141,6 +141,8 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
       data: {
         googleId,
         name: name || user.name,
+        authMethod: user.authMethod === "EMAIL" ? "BOTH" : "GOOGLE", // Update auth method if user was email auth
+        emailVerified: true, // Mark as verified since Google verified it
       },
       include: { profile: true },
     });
@@ -205,6 +207,8 @@ export const googleRegisterService = async (
         email,
         name,
         googleId,
+        authMethod: "GOOGLE",
+        emailVerified: true, // Google accounts are pre-verified
         role: "USER",
       },
     });

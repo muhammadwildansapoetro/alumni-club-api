@@ -12,18 +12,6 @@ export const generalRateLimit = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-// Strict rate limiting for authentication endpoints
-export const authRateLimit = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes instead of 15
-  max: 15, // 15 attempts instead of 5
-  message: {
-    success: false,
-    error: "Terlalu banyak percobaan, silakan coba lagi dalam 5 menit",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true, // Don't count successful requests
-});
 
 // Rate limiting for file upload endpoints
 export const uploadRateLimit = rateLimit({
