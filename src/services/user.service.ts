@@ -7,6 +7,7 @@ import type { UserRole } from "../../generated/prisma/index.js";
 interface AlumniCSVRow {
   email: string;
   name: string;
+  npm: string;
   fullName?: string;
   department: string;
   classYear: string;
@@ -313,6 +314,7 @@ export const updateUserProfileService = async (
         await tx.alumniProfile.create({
           data: {
             userId,
+            npm: "0000000000000", // Default value - should be updated later
             fullName: data.profile.fullName || updatedUserObj.name || "",
             department: "TEP", // Default value
             classYear: new Date().getFullYear(), // Default value
@@ -431,6 +433,7 @@ export const createUserService = async (data: {
   email: string;
   name: string;
   role: UserRole;
+  npm: string;
   department: string;
   classYear: number;
   fullName?: string;
@@ -458,6 +461,7 @@ export const createUserService = async (data: {
     const alumniProfile = await tx.alumniProfile.create({
       data: {
         userId: user.id,
+        npm: data.npm,
         fullName: data.fullName || data.name,
         department: data.department as any,
         classYear: data.classYear,
@@ -504,7 +508,7 @@ export const importAlumniFromCSVService = async (
             return;
           }
 
-          const requiredFields = ["email", "name", "department", "classYear"];
+          const requiredFields = ["email", "name", "npm", "department", "classYear"];
           const missingFields = requiredFields.filter(
             (field) => !(field in firstRow)
           );
@@ -528,6 +532,7 @@ export const importAlumniFromCSVService = async (
               if (
                 !row?.email ||
                 !row?.name ||
+                !row?.npm ||
                 !row?.department ||
                 !row?.classYear
               ) {
@@ -565,6 +570,15 @@ export const importAlumniFromCSVService = async (
               ) {
                 errors.push(
                   `Baris ${rowNum}: Tahun angkatan tidak valid: ${row.classYear}`
+                );
+                failedCount++;
+                continue;
+              }
+
+              // Validasi NPM
+              if (!/^\d{1,13}$/.test(row.npm)) {
+                errors.push(
+                  `Baris ${rowNum}: NPM tidak valid: ${row.npm}. Harus berupa angka maksimal 13 digit`
                 );
                 failedCount++;
                 continue;
@@ -610,6 +624,7 @@ export const importAlumniFromCSVService = async (
                 await tx.alumniProfile.create({
                   data: {
                     userId: user.id,
+                    npm: row.npm,
                     fullName: row.fullName || row.name,
                     department: row.department.toUpperCase() as any,
                     classYear: classYear,

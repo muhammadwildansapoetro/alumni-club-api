@@ -23,6 +23,7 @@ const JWT_EXPIRES = "7d";
  * @param email User email
  * @param password User password
  * @param name User name
+ * @param npm Student ID number
  * @param department Department (TEP, TPN, TIN)
  * @param classYear Class year
  * @returns User and encrypted JWT token
@@ -31,6 +32,7 @@ export const registerService = async (
   email: string,
   password: string,
   name: string,
+  npm: string,
   department: "TEP" | "TPN" | "TIN",
   classYear: number
 ) => {
@@ -74,6 +76,7 @@ export const registerService = async (
     const alumniProfile = await tx.alumniProfile.create({
       data: {
         userId: newUser.id,
+        npm,
         fullName: name,
         department,
         classYear,

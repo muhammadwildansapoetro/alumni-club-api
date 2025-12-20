@@ -45,6 +45,7 @@ export const googleRegisterController = async (req: Request, res: Response) => {
     // Register user with Google info and additional registration data
     const { user, token } = await googleRegisterService(
       googleUserInfo,
+      body.npm,
       body.department,
       body.classYear
     );

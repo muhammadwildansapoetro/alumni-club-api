@@ -32,6 +32,7 @@ model User {
 model AlumniProfile {
   id              String           @id @default(cuid())
   userId          String           @unique
+  npm             String           // Student ID number - required
   fullName        String
   department      Department
   classYear       Int

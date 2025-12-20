@@ -23,9 +23,9 @@ import type {
  */
 export const registerController = async (req: Request, res: Response) => {
   try {
-    const { email, password, name, department, classYear }: RegisterInput = req.body;
+    const { email, password, name, npm, department, classYear }: RegisterInput = req.body;
 
-    const result = await registerService(email, password, name, department, classYear);
+    const result = await registerService(email, password, name, npm, department, classYear);
 
     return res.status(201).json(result);
   } catch (error: any) {

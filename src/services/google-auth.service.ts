@@ -172,6 +172,7 @@ export const googleAuthService = async (googleUserInfo: GoogleUserInfo) => {
 
 export const googleRegisterService = async (
   googleUserInfo: GoogleUserInfo,
+  npm: string,
   department: string,
   classYear: number
 ) => {
@@ -217,6 +218,7 @@ export const googleRegisterService = async (
     const alumniProfile = await tx.alumniProfile.create({
       data: {
         userId: newUser.id,
+        npm,
         fullName: name,
         department: department as "TEP" | "TPN" | "TIN",
         classYear: classYear,

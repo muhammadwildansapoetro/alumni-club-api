@@ -7,7 +7,7 @@ const DepartmentEnum = z.enum(["TEP", "TPN", "TIN"], {
 
 // Schema for user registration with email and password
 export const registerSchema = z.object({
-  email: z.string().email("Format email tidak valid"),
+  email: z.email("Format email tidak valid"),
   password: z
     .string()
     .min(8, "Password minimal 8 karakter")
@@ -16,11 +16,16 @@ export const registerSchema = z.object({
       "Password harus mengandung huruf besar, huruf kecil, dan angka"
     ),
   name: z.string().min(1, "Nama lengkap wajib diisi"),
+  npm: z
+    .string()
+    .min(1, "NPM wajib diisi")
+    .max(13, "NPM maksimal 13 digit")
+    .regex(/^\d+$/, "NPM hanya boleh berisi angka"),
   department: DepartmentEnum,
   classYear: z
     .number()
     .int("Tahun angkatan harus berupa angka bulat")
-    .min(1983, "Tahun angkatan tidak valid")
+    .min(1959, "Tahun angkatan tidak valid")
     .max(
       new Date().getFullYear(),
       "Tahun angkatan tidak boleh melebihi tahun ini"
@@ -40,6 +45,11 @@ export const googleAuthSchema = z.object({
 // Schema for Google user registration (no password required)
 export const googleRegisterSchema = z.object({
   token: z.string().min(1, "Google token wajib diisi"),
+  npm: z
+    .string()
+    .min(1, "NPM wajib diisi")
+    .max(13, "NPM maksimal 13 digit")
+    .regex(/^\d+$/, "NPM hanya boleh berisi angka"),
   department: DepartmentEnum,
   classYear: z
     .number()

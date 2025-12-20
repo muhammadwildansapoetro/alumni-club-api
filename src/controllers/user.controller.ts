@@ -316,13 +316,21 @@ export const getDeletedUsersController = async (
 // POST /api/users - Buat pengguna baru (hanya admin)
 export const createUserController = async (req: Request, res: Response) => {
   try {
-    const { email, name, role, department, classYear, fullName } = req.body;
+    const { email, name, role, npm, department, classYear, fullName } = req.body;
 
     // Validasi input
-    if (!email || !name || !department || !classYear) {
+    if (!email || !name || !npm || !department || !classYear) {
       return res.status(400).json({
         success: false,
-        error: "Email, nama, department, dan classYear wajib diisi",
+        error: "Email, nama, npm, department, dan classYear wajib diisi",
+      });
+    }
+
+    // Validasi NPM
+    if (!/^\d{1,13}$/.test(npm)) {
+      return res.status(400).json({
+        success: false,
+        error: "NPM hanya boleh berisi angka maksimal 13 digit",
       });
     }
 
@@ -355,6 +363,7 @@ export const createUserController = async (req: Request, res: Response) => {
       email: email.toLowerCase(),
       name,
       role: userRole,
+      npm,
       department: department.toUpperCase(),
       classYear: classYearNum,
       fullName,
