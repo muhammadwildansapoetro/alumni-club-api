@@ -1,13 +1,13 @@
 import nodemailer from "nodemailer";
 
 // Email configuration from environment variables
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
-const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@ftip-alumni.com";
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "FTIP Unpad Alumni Club";
-const BASE_URL_FE = process.env.BASE_URL_FE || "http://localhost:3000";
+const EMAIL_FROM = process.env.EMAIL_FROM;
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME;
+const BASE_URL_FE = process.env.BASE_URL_FE;
 
 // Create email transporter
 const createTransporter = () => {
@@ -40,7 +40,7 @@ export const sendVerificationEmail = async (
   token: string
 ): Promise<void> => {
   const transporter = createTransporter();
-  const verificationLink = `${BASE_URL_FE}/auth/verify-email?token=${token}`;
+  const verificationLink = `${BASE_URL_FE}/register/verify-email?token=${token}`;
 
   const htmlContent = `
     <!DOCTYPE html>

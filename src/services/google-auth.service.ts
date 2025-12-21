@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { encrypt } from "../lib/encryption.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
-const JWT_EXPIRES = "7d";
+const JWT_EXPIRES = "1d";
 
 // Initialize Google OAuth2 client
 const googleClient = new OAuth2Client(

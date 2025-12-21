@@ -16,7 +16,7 @@ import {
 
 // JWT Configuration
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
-const JWT_EXPIRES = "7d";
+const JWT_EXPIRES = "1d";
 
 /**
  * Register a new user with email and password
