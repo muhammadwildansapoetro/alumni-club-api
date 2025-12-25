@@ -13,7 +13,7 @@ export const createJobPostingService = async (
     externalUrl?: string;
   }
 ) => {
-  const jobPosting = await prisma.jobPosting.create({
+  const jobs = await prisma.jobs.create({
     data: {
       userId,
       title: data.title,
@@ -54,7 +54,7 @@ export const createJobPostingService = async (
     },
   });
 
-  return jobPosting;
+  return jobs;
 };
 
 // READ - Get all job postings (public, with pagination and filters)
@@ -97,7 +97,7 @@ export const getAllJobPostingsService = async (
   }
 
   const [jobs, total] = await Promise.all([
-    prisma.jobPosting.findMany({
+    prisma.jobs.findMany({
       where: whereCondition,
       skip,
       take: limit,
@@ -130,7 +130,7 @@ export const getAllJobPostingsService = async (
         },
       },
     }),
-    prisma.jobPosting.count({ where: whereCondition }),
+    prisma.jobs.count({ where: whereCondition }),
   ]);
 
   return {
@@ -146,7 +146,7 @@ export const getAllJobPostingsService = async (
 
 // READ - Get job posting by ID (public)
 export const getJobPostingByIdService = async (jobId: string) => {
-  const job = await prisma.jobPosting.findUnique({
+  const job = await prisma.jobs.findUnique({
     where: { id: jobId },
     select: {
       id: true,
@@ -170,7 +170,10 @@ export const getJobPostingByIdService = async (jobId: string) => {
               fullName: true,
               department: true,
               classYear: true,
-              city: true,
+              cityId: true,
+              cityName: true,
+              provinceId: true,
+              provinceName: true,
               industry: true,
             },
           },
@@ -200,7 +203,7 @@ export const updateJobPostingService = async (
     isActive?: boolean;
   }
 ) => {
-  const existingJob = await prisma.jobPosting.findUnique({
+  const existingJob = await prisma.jobs.findUnique({
     where: { id: jobId },
   });
 
@@ -208,7 +211,7 @@ export const updateJobPostingService = async (
     throw new Error("Lowongan kerja tidak ditemukan");
   }
 
-  const updatedJob = await prisma.jobPosting.update({
+  const updatedJob = await prisma.jobs.update({
     where: { id: jobId },
     data: {
       ...data,
@@ -248,7 +251,7 @@ export const updateJobPostingService = async (
 
 // DELETE - Delete job posting (owner or admin)
 export const deleteJobPostingService = async (jobId: string) => {
-  const existingJob = await prisma.jobPosting.findUnique({
+  const existingJob = await prisma.jobs.findUnique({
     where: { id: jobId },
   });
 
@@ -256,7 +259,7 @@ export const deleteJobPostingService = async (jobId: string) => {
     throw new Error("Lowongan kerja tidak ditemukan");
   }
 
-  await prisma.jobPosting.delete({
+  await prisma.jobs.delete({
     where: { id: jobId },
   });
 

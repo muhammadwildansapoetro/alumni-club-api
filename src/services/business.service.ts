@@ -12,7 +12,7 @@ export const createBusinessListingService = async (
     contactInfo?: string;
   }
 ) => {
-  const businessListing = await prisma.businessDirectory.create({
+  const businessListing = await prisma.business.create({
     data: {
       userId,
       businessName: data.businessName,
@@ -89,7 +89,7 @@ export const getAllBusinessListingsService = async (
   }
 
   const [businesses, total] = await Promise.all([
-    prisma.businessDirectory.findMany({
+    prisma.business.findMany({
       where: whereCondition,
       skip,
       take: limit,
@@ -121,7 +121,7 @@ export const getAllBusinessListingsService = async (
         },
       },
     }),
-    prisma.businessDirectory.count({ where: whereCondition }),
+    prisma.business.count({ where: whereCondition }),
   ]);
 
   return {
@@ -137,7 +137,7 @@ export const getAllBusinessListingsService = async (
 
 // READ - Get business listing by ID (public)
 export const getBusinessListingByIdService = async (businessId: string) => {
-  const business = await prisma.businessDirectory.findUnique({
+  const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
       id: true,
@@ -160,7 +160,10 @@ export const getBusinessListingByIdService = async (businessId: string) => {
               fullName: true,
               department: true,
               classYear: true,
-              city: true,
+              cityId: true,
+              cityName: true,
+              provinceId: true,
+              provinceName: true,
               industry: true,
             },
           },
@@ -189,7 +192,7 @@ export const updateBusinessListingService = async (
     isActive?: boolean;
   }
 ) => {
-  const existingBusiness = await prisma.businessDirectory.findUnique({
+  const existingBusiness = await prisma.business.findUnique({
     where: { id: businessId },
   });
 
@@ -197,7 +200,7 @@ export const updateBusinessListingService = async (
     throw new Error("Direktori bisnis tidak ditemukan");
   }
 
-  const updatedBusiness = await prisma.businessDirectory.update({
+  const updatedBusiness = await prisma.business.update({
     where: { id: businessId },
     data: {
       ...data,
@@ -236,7 +239,7 @@ export const updateBusinessListingService = async (
 
 // DELETE - Delete business listing (owner or admin)
 export const deleteBusinessListingService = async (businessId: string) => {
-  const existingBusiness = await prisma.businessDirectory.findUnique({
+  const existingBusiness = await prisma.business.findUnique({
     where: { id: businessId },
   });
 
@@ -244,7 +247,7 @@ export const deleteBusinessListingService = async (businessId: string) => {
     throw new Error("Direktori bisnis tidak ditemukan");
   }
 
-  await prisma.businessDirectory.delete({
+  await prisma.business.delete({
     where: { id: businessId },
   });
 

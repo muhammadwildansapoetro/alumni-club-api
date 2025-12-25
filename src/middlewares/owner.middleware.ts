@@ -30,14 +30,14 @@ export const createOwnerMiddleware = (resourceType: 'job' | 'business') => {
 
       let resource;
       if (resourceType === 'job') {
-        resource = await prisma.jobPosting.findFirst({
+        resource = await prisma.jobs.findFirst({
           where: {
             id,
             userId: user.id
           },
         });
       } else if (resourceType === 'business') {
-        resource = await prisma.businessDirectory.findFirst({
+        resource = await prisma.business.findFirst({
           where: {
             id,
             userId: user.id

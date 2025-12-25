@@ -39,7 +39,10 @@ export const getAllUsersService = async (
             fullName: true,
             department: true,
             classYear: true,
-            city: true,
+            cityId: true,
+            cityName: true,
+            provinceId: true,
+            provinceName: true,
             industry: true,
             employmentLevel: true,
             jobTitle: true,
@@ -87,7 +90,10 @@ export const getUserByIdService = async (userId: string) => {
           fullName: true,
           department: true,
           classYear: true,
-          city: true,
+          cityId: true,
+            cityName: true,
+            provinceId: true,
+            provinceName: true,
           industry: true,
           employmentLevel: true,
           incomeRange: true,
@@ -134,7 +140,7 @@ export const getAlumniDirectoryService = async (
   const profileFilter: any = {};
   if (department) profileFilter.department = department;
   if (classYear) profileFilter.classYear = classYear;
-  if (city) profileFilter.city = { contains: city, mode: "insensitive" };
+  if (city) profileFilter.cityName = { contains: city, mode: "insensitive" };
   if (industry) profileFilter.industry = industry;
 
   // Search by name or email
@@ -163,7 +169,10 @@ export const getAlumniDirectoryService = async (
             fullName: true,
             department: true,
             classYear: true,
-            city: true,
+            cityId: true,
+            cityName: true,
+            provinceId: true,
+            provinceName: true,
             industry: true,
             employmentLevel: true,
             jobTitle: true,
@@ -233,7 +242,10 @@ export const updateUserProfileService = async (
     name?: string;
     profile?: {
       fullName?: string;
-      city?: string;
+      cityId?: number;
+      cityName?: string;
+      provinceId?: number;
+      provinceName?: string;
       industry?: any;
       employmentLevel?: any;
       incomeRange?: any;
@@ -300,18 +312,18 @@ export const updateUserProfileService = async (
 
     // Perbarui profil alumni jika disediakan
     if (data.profile) {
-      const existingProfile = await tx.alumniProfile.findUnique({
+      const existingProfile = await tx.alumni.findUnique({
         where: { userId },
       });
 
       if (existingProfile) {
-        await tx.alumniProfile.update({
+        await tx.alumni.update({
           where: { userId },
           data: data.profile,
         });
       } else {
         // Buat profil jika tidak ada
-        await tx.alumniProfile.create({
+        await tx.alumni.create({
           data: {
             userId,
             npm: "0000000000000", // Default value - should be updated later
@@ -458,7 +470,7 @@ export const createUserService = async (data: {
     });
 
     // Create AlumniProfile
-    const alumniProfile = await tx.alumniProfile.create({
+    const alumni = await tx.alumni.create({
       data: {
         userId: user.id,
         npm: data.npm,
@@ -468,7 +480,7 @@ export const createUserService = async (data: {
       },
     });
 
-    return { user, alumniProfile };
+    return { user, alumni };
   });
 
   return result;
@@ -621,7 +633,7 @@ export const importAlumniFromCSVService = async (
                   },
                 });
 
-                await tx.alumniProfile.create({
+                await tx.alumni.create({
                   data: {
                     userId: user.id,
                     npm: row.npm,

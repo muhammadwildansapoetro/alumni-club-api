@@ -72,8 +72,8 @@ export const registerService = async (
       },
     });
 
-    // Create AlumniProfile
-    const alumniProfile = await tx.alumniProfile.create({
+    // Create Alumni
+    const alumni = await tx.alumni.create({
       data: {
         userId: newUser.id,
         npm,
@@ -83,7 +83,7 @@ export const registerService = async (
       },
     });
 
-    return { user: newUser, profile: alumniProfile };
+    return { user: newUser, profile: alumni };
   });
 
   // Send verification email

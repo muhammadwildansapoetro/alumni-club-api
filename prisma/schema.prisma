@@ -9,36 +9,40 @@ datasource db {
 }
 
 model User {
-  id                       String              @id @default(cuid())
-  email                    String              @unique
+  id                       String     @id @default(cuid())
+  email                    String     @unique
   name                     String?
-  password                 String?             // For email/password authentication
-  googleId                 String?             @unique  // For Google OAuth
-  authMethod               AuthMethod          @default(EMAIL)
-  role                     UserRole            @default(USER)
-  emailVerified            Boolean             @default(false)
-  emailVerificationToken   String?             @unique
+  password                 String? // For email/password authentication
+  googleId                 String?    @unique // For Google OAuth
+  authMethod               AuthMethod @default(EMAIL)
+  role                     UserRole   @default(USER)
+  emailVerified            Boolean    @default(false)
+  emailVerificationToken   String?    @unique
   emailVerificationExpires DateTime?
-  passwordResetToken       String?             @unique
+  passwordResetToken       String?    @unique
   passwordResetExpires     DateTime?
   deletedAt                DateTime?
-  createdAt                DateTime            @default(now())
-  updatedAt                DateTime            @updatedAt
-  profile                  AlumniProfile?
-  businessListings         BusinessDirectory[]
-  jobPostings              JobPosting[]
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+  profile                  Alumni?
+  businessListings         Business[]
+  jobPostings              Jobs[]
 }
 
-model AlumniProfile {
+model Alumni {
   id              String           @id @default(cuid())
   userId          String           @unique
-  npm             String           // Student ID number - required
+  npm             String // Student ID number - required
   fullName        String
   department      Department
   classYear       Int
-  city            String?
+  cityId          Int? // Foreign key to City table
+  cityName        String? // Denormalized for performance
+  provinceId      Int? // Foreign key to Province table
+  provinceName    String? // Denormalized for performance
   industry        IndustryField?
   employmentLevel EmploymentLevel?
+  employmentType  EmploymentType? // NEW: Employment type enum
   incomeRange     IncomeRange?
   jobTitle        String?
   companyName     String?
@@ -46,9 +50,11 @@ model AlumniProfile {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   user            User             @relation(fields: [userId], references: [id])
+  city            City?            @relation(fields: [cityId], references: [id])
+  province        Province?        @relation(fields: [provinceId], references: [id])
 }
 
-model JobPosting {
+model Jobs {
   id          String   @id @default(cuid())
   userId      String
   title       String
@@ -64,7 +70,7 @@ model JobPosting {
   user        User     @relation(fields: [userId], references: [id])
 }
 
-model BusinessDirectory {
+model Business {
   id           String   @id @default(cuid())
   userId       String
   businessName String
@@ -79,11 +85,34 @@ model BusinessDirectory {
   user         User     @relation(fields: [userId], references: [id])
 }
 
+model Province {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  code      String?  @unique
+  cities    City[]
+  alumni    Alumni[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model City {
+  id         Int      @id @default(autoincrement())
+  name       String
+  provinceId Int
+  code       String?
+  alumni     Alumni[]
+  province   Province @relation(fields: [provinceId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([name, provinceId])
+}
+
 model Statistics {
   id           String         @id @default(cuid())
   type         StatisticsType @unique
   alumniData   Json?
-  jobData      Json?
+  jobsData     Json? // Updated from jobData
   businessData Json?
   totalItems   Int            @default(0)
   lastUpdated  DateTime       @default(now())
@@ -121,11 +150,22 @@ enum EmploymentLevel {
   OTHER
 }
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  SELF_EMPLOYED
+  FREELANCE
+  CONTRACT
+  INTERNSHIP
+  SEASONAL
+  APPRENTICESHIP
+}
+
 enum IncomeRange {
   BELOW_5M
   RANGE_5_10M
-  RANGE_10_20M
-  ABOVE_20M
+  RANGE_10_15M
+  ABOVE_15M
   UNKNOWN
 }
 
@@ -140,12 +180,38 @@ enum IndustryField {
   MARKETING
   FINANCE
   GOVERNMENT
-  FREELANCE
   OTHER
+  HORTICULTURE
+  PLANTATION
+  LIVESTOCK
+  FISHERIES
+  FOOD_PROCESSING
+  AGRI_CHEMICAL
+  AGRI_MACHINERY
+  IRRIGATION
+  MANUFACTURING
+  CONSTRUCTION
+  MINING
+  ENERGY
+  TELECOMMUNICATION
+  TRANSPORTATION
+  LOGISTICS
+  HEALTHCARE
+  HOSPITALITY
+  RETAIL
+  REAL_ESTATE
+  CONSULTING
+  LEGAL
+  MEDIA
+  ENTERTAINMENT
+  INFORMATION_TECHNOLOGY
+  E_COMMERCE
+  BANKING
+  INSURANCE
 }
 
 enum StatisticsType {
   ALUMNI
-  JOB_POSTINGS
-  BUSINESS_POSTINGS
+  JOBS
+  BUSINESS
 }

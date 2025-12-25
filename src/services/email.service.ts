@@ -67,7 +67,7 @@ export const sendVerificationEmail = async (
         }
         .header {
           text-align: left;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
         .logo {
           font-size: 24px;
@@ -171,7 +171,7 @@ export const sendPasswordResetEmail = async (
         }
         .header {
           text-align: left;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
         .logo {
           font-size: 24px;
@@ -281,7 +281,7 @@ export const sendWelcomeEmail = async (
         }
         .header {
           text-align: left;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
         .logo {
           font-size: 24px;

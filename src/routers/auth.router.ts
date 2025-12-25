@@ -9,13 +9,6 @@ import {
   resetPasswordController,
   changePasswordController,
 } from "../controllers/auth.controller.js";
-import {
-  googleAuthController,
-  googleRegisterController,
-  googleCallbackController,
-  getGoogleAuthController
-} from "../controllers/google-auth.controller.js";
-import { testEmailController } from "../controllers/test-email.controller.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   registerSchema,
@@ -24,27 +17,37 @@ import {
   resetPasswordSchema,
   changePasswordSchema,
   resendVerificationSchema,
-  verifyEmailSchema
 } from "../types/auth.types.js";
 
 const authRouter = Router();
 
 // Email/Password authentication endpoints
-authRouter.post("/register", validateRequest(registerSchema), registerController);
+authRouter.post(
+  "/register",
+  validateRequest(registerSchema),
+  registerController
+);
 authRouter.post("/login", validateRequest(loginSchema), loginController);
 authRouter.get("/verify-email/:token", verifyEmailController);
-authRouter.post("/resend-verification", validateRequest(resendVerificationSchema), resendVerificationController);
-authRouter.post("/forgot-password", validateRequest(forgotPasswordSchema), forgotPasswordController);
-authRouter.post("/reset-password", validateRequest(resetPasswordSchema), resetPasswordController);
-authRouter.post("/change-password", validateRequest(changePasswordSchema), changePasswordController);
-
-// Google authentication endpoints (existing)
-authRouter.get("/google", getGoogleAuthController);
-authRouter.post("/google", googleAuthController);
-authRouter.post("/google/register", googleRegisterController);
-authRouter.get("/google/callback", googleCallbackController);
-
-// Test endpoint for email debugging
-authRouter.post("/test-email", testEmailController);
+authRouter.post(
+  "/resend-verification",
+  validateRequest(resendVerificationSchema),
+  resendVerificationController
+);
+authRouter.post(
+  "/forgot-password",
+  validateRequest(forgotPasswordSchema),
+  forgotPasswordController
+);
+authRouter.post(
+  "/reset-password",
+  validateRequest(resetPasswordSchema),
+  resetPasswordController
+);
+authRouter.post(
+  "/change-password",
+  validateRequest(changePasswordSchema),
+  changePasswordController
+);
 
 export default authRouter;

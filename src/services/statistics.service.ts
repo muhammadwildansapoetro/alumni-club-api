@@ -24,7 +24,7 @@ const getClassYearRange = (classYear: number) => {
 // Helper function to refresh alumni statistics
 const refreshAlumniStatistics = async () => {
   // Get all alumni profiles with their employment data
-  const alumniProfiles = await prisma.alumniProfile.findMany({
+  const alumnis = await prisma.alumni.findMany({
     include: {
       user: {
         select: {
@@ -35,7 +35,7 @@ const refreshAlumniStatistics = async () => {
   });
 
   // Filter out deleted users
-  const activeAlumni = alumniProfiles.filter(alumni => !alumni.user.deletedAt);
+  const activeAlumni = alumnis.filter(alumni => !alumni.user.deletedAt);
 
   // Calculate basic statistics
   const totalAlumni = activeAlumni.length;
@@ -92,8 +92,8 @@ const refreshAlumniStatistics = async () => {
     }
 
     // City distribution
-    if (alumni.city) {
-      alumniByCity[alumni.city] = (alumniByCity[alumni.city] || 0) + 1;
+    if (alumni.cityName) {
+      alumniByCity[alumni.cityName] = (alumniByCity[alumni.cityName] || 0) + 1;
     }
   });
 
@@ -273,14 +273,17 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
 
   // Execute query
   const [alumni, total] = await Promise.all([
-    prisma.alumniProfile.findMany({
+    prisma.alumni.findMany({
       where,
       select: {
         id: true,
         fullName: true,
         department: true,
         classYear: true,
-        city: true,
+        cityId: true,
+        cityName: true,
+        provinceId: true,
+        provinceName: true,
         industry: true,
         jobTitle: true,
         companyName: true,
@@ -290,7 +293,7 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
       take: limit,
       orderBy,
     }),
-    prisma.alumniProfile.count({ where }),
+    prisma.alumni.count({ where }),
   ]);
 
   const totalPages = Math.ceil(total / limit);
@@ -301,7 +304,7 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
     fullName: alum.fullName,
     department: alum.department,
     classYear: alum.classYear,
-    city: alum.city || undefined,
+    city: alum.cityName || undefined,
     industry: alum.industry || undefined,
     jobTitle: alum.jobTitle || undefined,
     companyName: alum.companyName || undefined,
@@ -337,7 +340,7 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
 // Helper function to refresh job posting statistics
 const refreshJobStatistics = async () => {
   // Get all job postings
-  const jobPostings = await prisma.jobPosting.findMany({
+  const jobss = await prisma.jobs.findMany({
     include: {
       user: {
         select: {
@@ -348,7 +351,7 @@ const refreshJobStatistics = async () => {
   });
 
   // Filter out deleted users
-  const activeJobPostings = jobPostings.filter(job => !job.user.deletedAt);
+  const activeJobPostings = jobss.filter(job => !job.user.deletedAt);
 
   // Calculate basic statistics
   const totalJobs = activeJobPostings.length;
@@ -400,7 +403,7 @@ const refreshJobStatistics = async () => {
     : null;
 
   // Calculate industry distribution from alumni profiles who posted jobs
-  const jobPosters = await prisma.alumniProfile.findMany({
+  const jobPosters = await prisma.alumni.findMany({
     where: {
       userId: {
         in: activeJobPostings.map(job => job.userId),
@@ -428,7 +431,7 @@ const refreshJobStatistics = async () => {
   ).length;
 
   // Structure the job data
-  const jobData = {
+  const jobsData = {
     totalJobs,
     activeJobs,
     inactiveJobs,
@@ -454,16 +457,16 @@ const refreshJobStatistics = async () => {
 
   // Upsert statistics
   await prisma.statistics.upsert({
-    where: { type: "JOB_POSTINGS" },
+    where: { type: "JOBS" },
     update: {
       totalItems: totalJobs,
-      jobData,
+      jobsData,
       lastUpdated: new Date(),
     },
     create: {
-      type: "JOB_POSTINGS",
+      type: "JOBS",
       totalItems: totalJobs,
-      jobData,
+      jobsData,
     },
   });
 
@@ -477,26 +480,26 @@ export const getJobStatsPublicService = async (refresh: boolean = false): Promis
   }
 
   const stats = await prisma.statistics.findUnique({
-    where: { type: "JOB_POSTINGS" },
+    where: { type: "JOBS" },
   });
 
-  if (!stats || !stats.jobData) {
+  if (!stats || !stats.jobsData) {
     // If no statistics exist, create them
     await refreshJobStatistics();
     return getJobStatsPublicService(false);
   }
 
-  const jobData = stats.jobData as any;
+  const jobsData = stats.jobsData as any;
 
   const response: JobStatsPublicResponse = {
-    totalJobs: jobData.totalJobs || 0,
-    activeJobs: jobData.activeJobs || 0,
-    inactiveJobs: jobData.inactiveJobs || 0,
-    jobTypeStats: jobData.jobTypeStats || {},
-    locationStats: jobData.locationStats || {},
-    companyStats: jobData.companyStats || {},
-    industryStats: jobData.industryStats || {},
-    averageSalaryRange: jobData.averageSalaryRange || null,
+    totalJobs: jobsData.totalJobs || 0,
+    activeJobs: jobsData.activeJobs || 0,
+    inactiveJobs: jobsData.inactiveJobs || 0,
+    jobTypeStats: jobsData.jobTypeStats || {},
+    locationStats: jobsData.locationStats || {},
+    companyStats: jobsData.companyStats || {},
+    industryStats: jobsData.industryStats || {},
+    averageSalaryRange: jobsData.averageSalaryRange || null,
     lastUpdated: stats.lastUpdated.toISOString(),
   };
 
@@ -514,29 +517,29 @@ export const getJobStatsDashboardService = async (
   }
 
   const stats = await prisma.statistics.findUnique({
-    where: { type: "JOB_POSTINGS" },
+    where: { type: "JOBS" },
   });
 
-  if (!stats || !stats.jobData) {
+  if (!stats || !stats.jobsData) {
     await refreshJobStatistics();
     return getJobStatsDashboardService(false, includeSalaryDetails, includeApplicationStats);
   }
 
-  const jobData = stats.jobData as any;
+  const jobsData = stats.jobsData as any;
 
   const response: JobStatsDashboardResponse = {
-    totalJobs: jobData.totalJobs || 0,
-    activeJobs: jobData.activeJobs || 0,
-    inactiveJobs: jobData.inactiveJobs || 0,
-    jobTypeStats: jobData.jobTypeStats || {},
-    locationStats: jobData.locationStats || {},
-    companyStats: jobData.companyStats || {},
-    industryStats: jobData.industryStats || {},
-    averageSalaryRange: jobData.averageSalaryRange || null,
+    totalJobs: jobsData.totalJobs || 0,
+    activeJobs: jobsData.activeJobs || 0,
+    inactiveJobs: jobsData.inactiveJobs || 0,
+    jobTypeStats: jobsData.jobTypeStats || {},
+    locationStats: jobsData.locationStats || {},
+    companyStats: jobsData.companyStats || {},
+    industryStats: jobsData.industryStats || {},
+    averageSalaryRange: jobsData.averageSalaryRange || null,
     salaryStats: includeSalaryDetails ? {
-      salaryRangeDistribution: jobData.salaryStats?.salaryRangeDistribution || {},
-      averageSalaryMin: jobData.salaryStats?.averageSalaryMin || null,
-      averageSalaryMax: jobData.salaryStats?.averageSalaryMax || null,
+      salaryRangeDistribution: jobsData.salaryStats?.salaryRangeDistribution || {},
+      averageSalaryMin: jobsData.salaryStats?.averageSalaryMin || null,
+      averageSalaryMax: jobsData.salaryStats?.averageSalaryMax || null,
     } : {
       salaryRangeDistribution: {},
       averageSalaryMin: null,
@@ -547,7 +550,7 @@ export const getJobStatsDashboardService = async (
       avgApplicationsPerJob: 0,
       applicationRate: 0,
     } : undefined,
-    timeStats: jobData.timeStats || {
+    timeStats: jobsData.timeStats || {
       avgTimeToFill: null,
       jobPostingTrends: {
         thisMonth: 0,
@@ -566,7 +569,7 @@ export const getJobStatsDashboardService = async (
 // Helper function to refresh business posting statistics
 const refreshBusinessStatistics = async () => {
   // Get all business listings
-  const businessListings = await prisma.businessDirectory.findMany({
+  const businessListings = await prisma.business.findMany({
     include: {
       user: {
         select: {
@@ -653,14 +656,14 @@ const refreshBusinessStatistics = async () => {
 
   // Upsert statistics
   await prisma.statistics.upsert({
-    where: { type: "BUSINESS_POSTINGS" },
+    where: { type: "BUSINESS" },
     update: {
       totalItems: totalBusinesses,
       businessData,
       lastUpdated: new Date(),
     },
     create: {
-      type: "BUSINESS_POSTINGS",
+      type: "BUSINESS",
       totalItems: totalBusinesses,
       businessData,
     },
@@ -676,7 +679,7 @@ export const getBusinessStatsPublicService = async (refresh: boolean = false): P
   }
 
   const stats = await prisma.statistics.findUnique({
-    where: { type: "BUSINESS_POSTINGS" },
+    where: { type: "BUSINESS" },
   });
 
   if (!stats || !stats.businessData) {
@@ -715,7 +718,7 @@ export const getBusinessStatsDashboardService = async (
   }
 
   const stats = await prisma.statistics.findUnique({
-    where: { type: "BUSINESS_POSTINGS" },
+    where: { type: "BUSINESS" },
   });
 
   if (!stats || !stats.businessData) {
