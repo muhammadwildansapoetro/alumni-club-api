@@ -10,7 +10,8 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token =
+    req.cookies?.access_token || req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({
@@ -20,13 +21,10 @@ export const authMiddleware = (
   }
 
   try {
-    // Try to decrypt token first (in case it's encrypted from frontend)
     let decryptedToken = token;
     try {
       decryptedToken = decrypt(token);
-    } catch (decryptError) {
-      // If decryption fails, assume token is not encrypted
-    }
+    } catch (decryptError) {}
 
     const decoded = jwt.verify(decryptedToken, JWT_SECRET) as {
       id: string;

@@ -18,14 +18,19 @@ import type {
   ChangePasswordInput,
 } from "../types/auth.types.js";
 
-/**
- * Register a new user with email and password
- */
 export const registerController = async (req: Request, res: Response) => {
   try {
-    const { email, password, name, npm, department, classYear }: RegisterInput = req.body;
+    const { email, password, name, npm, department, classYear }: RegisterInput =
+      req.body;
 
-    const result = await registerService(email, password, name, npm, department, classYear);
+    const result = await registerService(
+      email,
+      password,
+      name,
+      npm,
+      department,
+      classYear
+    );
 
     return res.status(201).json(result);
   } catch (error: any) {
@@ -37,20 +42,24 @@ export const registerController = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Login user with email and password
- */
 export const loginController = async (req: Request, res: Response) => {
   try {
     const { email, password }: LoginInput = req.body;
 
     const result = await loginService(email, password);
 
+    res.cookie("access_token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 1000 * 60 * 15,
+    });
+
     return res.json({
       success: true,
       message: "Login berhasil.",
       user: result.user,
-      token: result.token
     });
   } catch (error: any) {
     console.error("Login error:", error);
@@ -61,9 +70,6 @@ export const loginController = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Verify email with token
- */
 export const verifyEmailController = async (req: Request, res: Response) => {
   try {
     const token = req.params.token as string;
@@ -80,10 +86,10 @@ export const verifyEmailController = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Resend email verification
- */
-export const resendVerificationController = async (req: Request, res: Response) => {
+export const resendVerificationController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { email }: ResendVerificationInput = req.body;
 
@@ -99,9 +105,6 @@ export const resendVerificationController = async (req: Request, res: Response) 
   }
 };
 
-/**
- * Request password reset
- */
 export const forgotPasswordController = async (req: Request, res: Response) => {
   try {
     const { email }: ForgotPasswordInput = req.body;
@@ -118,9 +121,6 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Reset password with token
- */
 export const resetPasswordController = async (req: Request, res: Response) => {
   try {
     const { token, password }: ResetPasswordInput = req.body;
@@ -137,15 +137,16 @@ export const resetPasswordController = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Change password for authenticated user
- */
 export const changePasswordController = async (req: Request, res: Response) => {
   try {
     const { currentPassword, newPassword }: ChangePasswordInput = req.body;
     const userId = (req as any).user.id; // User ID from auth middleware
 
-    const result = await changePasswordService(userId, currentPassword, newPassword);
+    const result = await changePasswordService(
+      userId,
+      currentPassword,
+      newPassword
+    );
 
     return res.json(result);
   } catch (error: any) {

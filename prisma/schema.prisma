@@ -32,17 +32,21 @@ model User {
 model Alumni {
   id              String           @id @default(cuid())
   userId          String           @unique
-  npm             String // Student ID number - required
+  npm             String
   fullName        String
-  department      Department
-  classYear       Int
-  cityId          Int? // Foreign key to City table
-  cityName        String? // Denormalized for performance
-  provinceId      Int? // Foreign key to Province table
-  provinceName    String? // Denormalized for performance
+  department         Department
+  classYear          Int
+  graduationYear     Int?
+  highestEducation   HighestEducation?
+  cityId             Int?
+  cityName        String?
+  provinceId      Int?
+  provinceName    String?
+  countryId       Int?
+  countryName     String?
   industry        IndustryField?
-  employmentLevel EmploymentLevel?
-  employmentType  EmploymentType? // NEW: Employment type enum
+  jobLevel        JobLevel?
+  employmentType  EmploymentType?
   incomeRange     IncomeRange?
   jobTitle        String?
   companyName     String?
@@ -128,7 +132,6 @@ enum UserRole {
 enum AuthMethod {
   EMAIL
   GOOGLE
-  BOTH
 }
 
 enum Department {
@@ -137,7 +140,7 @@ enum Department {
   TIN
 }
 
-enum EmploymentLevel {
+enum JobLevel {
   INTERN
   STAFF
   SUPERVISOR
@@ -214,4 +217,9 @@ enum StatisticsType {
   ALUMNI
   JOBS
   BUSINESS
+}
+
+enum HighestEducation {
+  MASTER
+  DOCTOR
 }

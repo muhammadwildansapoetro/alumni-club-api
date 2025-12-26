@@ -82,8 +82,8 @@ const refreshAlumniStatistics = async () => {
     }
 
     // Employment level distribution
-    if (alumni.employmentLevel) {
-      alumniByLevel[alumni.employmentLevel] = (alumniByLevel[alumni.employmentLevel] || 0) + 1;
+    if (alumni.jobLevel) {
+      alumniByLevel[alumni.jobLevel] = (alumniByLevel[alumni.jobLevel] || 0) + 1;
     }
 
     // Income range distribution
@@ -221,7 +221,7 @@ export const getAlumniStatsDashboardService = async (refresh: boolean = false, i
 
 // Search and filter alumni for public landing page
 export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) => {
-  const { page, limit, search, department, classYearFrom, classYearTo, city, industry, employmentLevel, sortBy, sortOrder } = query;
+  const { page, limit, search, department, classYearFrom, classYearTo, city, industry, jobLevel, sortBy, sortOrder } = query;
   const skip = (page - 1) * limit;
 
   // Build where clause
@@ -243,7 +243,7 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
   if (department) where.department = department;
   if (city) where.city = { contains: city, mode: "insensitive" };
   if (industry) where.industry = industry;
-  if (employmentLevel) where.employmentLevel = employmentLevel;
+  if (jobLevel) where.jobLevel = jobLevel;
 
   // Add class year range filter
   if (classYearFrom || classYearTo) {
@@ -284,10 +284,12 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
         cityName: true,
         provinceId: true,
         provinceName: true,
+        countryId: true,
+        countryName: true,
         industry: true,
         jobTitle: true,
         companyName: true,
-        employmentLevel: true,
+        jobLevel: true,
       },
       skip,
       take: limit,
@@ -308,7 +310,7 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
     industry: alum.industry || undefined,
     jobTitle: alum.jobTitle || undefined,
     companyName: alum.companyName || undefined,
-    employmentLevel: alum.employmentLevel || undefined,
+    jobLevel: alum.jobLevel || undefined,
   }));
 
   const response: AlumniSearchPublicResponse = {
@@ -328,7 +330,7 @@ export const searchAlumniPublicService = async (query: AlumniSearchPublicQuery) 
       classYearTo,
       city,
       industry,
-      employmentLevel,
+      jobLevel,
     },
   };
 

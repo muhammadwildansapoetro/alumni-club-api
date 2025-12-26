@@ -28,6 +28,17 @@ authRouter.post(
   registerController
 );
 authRouter.post("/login", validateRequest(loginSchema), loginController);
+
+authRouter.post("/logout", (_req, res) => {
+  res.clearCookie("access_token", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  res.json({ success: true, message: "Logout berhasil" });
+});
+
 authRouter.get("/verify-email/:token", verifyEmailController);
 authRouter.post(
   "/resend-verification",

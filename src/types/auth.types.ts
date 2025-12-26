@@ -34,7 +34,7 @@ export const registerSchema = z.object({
 
 // Schema for user login with email and password
 export const loginSchema = z.object({
-  email: z.string().email("Format email tidak valid"),
+  email: z.email("Format email tidak valid"),
   password: z.string().min(1, "Password wajib diisi"),
 });
 

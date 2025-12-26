@@ -1,33 +1,23 @@
-import { prisma } from '../lib/prisma.js';
-import jwt from 'jsonwebtoken';
-import { encrypt } from '../lib/encryption.js';
+import { prisma } from "../lib/prisma.js";
+import jwt from "jsonwebtoken";
+import { encrypt } from "../lib/encryption.js";
 import {
   hashPassword,
   comparePassword,
   generateVerificationToken,
   generatePasswordResetToken,
-  generateTokenExpiration
-} from '../lib/password.js';
+  generateTokenExpiration,
+} from "../lib/password.js";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-  sendWelcomeEmail
-} from './email.service.js';
+  sendWelcomeEmail,
+} from "./email.service.js";
 
 // JWT Configuration
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = "1d";
 
-/**
- * Register a new user with email and password
- * @param email User email
- * @param password User password
- * @param name User name
- * @param npm Student ID number
- * @param department Department (TEP, TPN, TIN)
- * @param classYear Class year
- * @returns User and encrypted JWT token
- */
 export const registerService = async (
   email: string,
   password: string,
@@ -42,11 +32,6 @@ export const registerService = async (
   });
 
   if (existingUser) {
-    if (existingUser.authMethod === "GOOGLE") {
-      throw new Error(
-        "Email sudah terdaftar dengan Google OAuth. Silakan login dengan Google atau hubungi admin untuk menghubungkan akun."
-      );
-    }
     throw new Error("Email sudah terdaftar. Silakan login.");
   }
 
@@ -96,23 +81,18 @@ export const registerService = async (
 
   return {
     success: true,
-    message: "Registrasi berhasil! Silakan periksa email Anda untuk verifikasi.",
+    message:
+      "Registrasi berhasil! Silakan periksa email Anda untuk verifikasi.",
     user: {
       id: result.user.id,
       email: result.user.email,
       name: result.user.name,
       emailVerified: result.user.emailVerified,
       profile: result.profile,
-    }
+    },
   };
 };
 
-/**
- * Login user with email and password
- * @param email User email
- * @param password User password
- * @returns User and encrypted JWT token
- */
 export const loginService = async (email: string, password: string) => {
   // Find user with email
   const user = await prisma.user.findUnique({
@@ -124,10 +104,10 @@ export const loginService = async (email: string, password: string) => {
     throw new Error("Email atau password tidak valid.");
   }
 
-  // Check authentication method
-  if (user.authMethod === "GOOGLE" && !user.password) {
+  // Check if user has password
+  if (!user.password) {
     throw new Error(
-      "Email ini terdaftar dengan Google OAuth. Silakan login dengan Google."
+      "Password tidak ditemukan. Silakan login dengan Google atau reset password Anda."
     );
   }
 
@@ -156,7 +136,7 @@ export const loginService = async (email: string, password: string) => {
       role: user.role,
       authMethod: user.authMethod,
     },
-    JWT_SECRET,
+    JWT_SECRET!,
     { expiresIn: JWT_EXPIRES }
   );
 
@@ -172,15 +152,10 @@ export const loginService = async (email: string, password: string) => {
       authMethod: user.authMethod,
       profile: user.profile,
     },
-    token: encryptedToken
+    token: encryptedToken,
   };
 };
 
-/**
- * Verify email with token
- * @param token Email verification token
- * @returns Success message and user data
- */
 export const verifyEmailService = async (token: string) => {
   // Find user with verification token
   const user = await prisma.user.findFirst({
@@ -226,15 +201,10 @@ export const verifyEmailService = async (token: string) => {
       name: updatedUser.name,
       emailVerified: updatedUser.emailVerified,
       profile: updatedUser.profile,
-    }
+    },
   };
 };
 
-/**
- * Resend email verification
- * @param email User email
- * @returns Success message
- */
 export const resendVerificationService = async (email: string) => {
   // Find user with email
   const user = await prisma.user.findUnique({
@@ -242,12 +212,15 @@ export const resendVerificationService = async (email: string) => {
   });
 
   if (!user) {
-    throw new Error("Email tidak ditemukan. Silakan registrasi terlebih dahulu.");
+    throw new Error(
+      "Email tidak ditemukan. Silakan registrasi terlebih dahulu."
+    );
   }
 
-  if (user.authMethod === "GOOGLE") {
+  // Check if user has password (email auth capability)
+  if (!user.password) {
     throw new Error(
-      "Email ini terdaftar dengan Google OAuth dan tidak memerlukan verifikasi."
+      "Akun ini menggunakan Google OAuth. Tidak memerlukan verifikasi email."
     );
   }
 
@@ -273,15 +246,11 @@ export const resendVerificationService = async (email: string) => {
 
   return {
     success: true,
-    message: "Email verifikasi telah dikirim ulang. Silakan periksa inbox Anda.",
+    message:
+      "Email verifikasi telah dikirim ulang. Silakan periksa inbox Anda.",
   };
 };
 
-/**
- * Request password reset
- * @param email User email
- * @returns Success message
- */
 export const forgotPasswordService = async (email: string) => {
   // Find user with email
   const user = await prisma.user.findUnique({
@@ -296,8 +265,8 @@ export const forgotPasswordService = async (email: string) => {
     };
   }
 
-  // Check authentication method
-  if (user.authMethod === "GOOGLE" && !user.password) {
+  // Check if user has password
+  if (!user.password) {
     return {
       success: true,
       message: "Jika email terdaftar, Anda akan menerima link reset password.",
@@ -330,13 +299,10 @@ export const forgotPasswordService = async (email: string) => {
   };
 };
 
-/**
- * Reset password with token
- * @param token Password reset token
- * @param newPassword New password
- * @returns Success message
- */
-export const resetPasswordService = async (token: string, newPassword: string) => {
+export const resetPasswordService = async (
+  token: string,
+  newPassword: string
+) => {
   // Find user with reset token
   const user = await prisma.user.findFirst({
     where: {
@@ -368,17 +334,11 @@ export const resetPasswordService = async (token: string, newPassword: string) =
 
   return {
     success: true,
-    message: "Password berhasil direset. Silakan login dengan password baru Anda.",
+    message:
+      "Password berhasil direset. Silakan login dengan password baru Anda.",
   };
 };
 
-/**
- * Change password for authenticated user
- * @param userId User ID
- * @param currentPassword Current password
- * @param newPassword New password
- * @returns Success message
- */
 export const changePasswordService = async (
   userId: string,
   currentPassword: string,
@@ -401,7 +361,10 @@ export const changePasswordService = async (
   }
 
   // Verify current password
-  const isCurrentPasswordValid = await comparePassword(currentPassword, user.password);
+  const isCurrentPasswordValid = await comparePassword(
+    currentPassword,
+    user.password
+  );
   if (!isCurrentPasswordValid) {
     throw new Error("Password saat ini tidak valid.");
   }

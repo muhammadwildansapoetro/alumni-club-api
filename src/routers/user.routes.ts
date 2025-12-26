@@ -1,89 +1,54 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
-import {
-  uploadRateLimit,
-  adminRateLimit,
-} from "../middlewares/rate-limit.middleware.js";
-import {
-  getAllUsersController,
-  getAlumniDirectoryController,
-  getUserByIdController,
-  updateUserRoleController,
-  softDeleteUserController,
-  restoreUserController,
-  getDeletedUsersController,
-  createUserController,
-  importAlumniFromCSVController,
-  validateCSVTemplateController,
-  updateUserProfileByAdminController,
-  updateCurrentUserProfileController,
-} from "../controllers/user.controller.js";
-import {
-  uploadCSVSingle,
-  handleUploadError,
-} from "../middlewares/upload.middleware.js";
+import { adminRateLimit } from "../middlewares/rate-limit.middleware.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
-  updateUserProfileSchema,
+  createUserController,
+  getAllUsersController,
+  getUserByIdController,
+  updateOwnProfileController,
+  softDeleteUserController,
+} from "../controllers/user.controller.js";
+import {
+  createUserSchema,
+  userListQuerySchema,
+  updateProfileSchema,
 } from "../types/user.types.js";
-import { profileDecryptionMiddleware } from "../middlewares/decryption.middleware.js";
 
 const router = Router();
 
-// All routes below require authentication
 router.use(authMiddleware);
 
-// User-facing routes
+// GET /api/users - List all users with search/filter (MUST come first, before /:id)
+router.get(
+  "/",
+  validateRequest(userListQuerySchema, "query"),
+  getAllUsersController
+);
 
-// Public directory (authenticated users)
-router.get("/directory", getAlumniDirectoryController);
-
-// View user profile
+// GET /api/users/:id - View user by ID (all fields, frontend handles visibility)
 router.get("/:id", getUserByIdController);
 
-// User profile management (authenticated users can edit their own profile)
+// PATCH /api/users/profile - Update own profile
 router.patch(
   "/profile",
-  profileDecryptionMiddleware,
-  validateRequest(updateUserProfileSchema),
-  updateCurrentUserProfileController
+  validateRequest(updateProfileSchema),
+  updateOwnProfileController
 );
 
-// Admin routes
-router.use("/admin", adminMiddleware);
+// Apply admin middleware to all following routes
+router.use(adminMiddleware);
 
-// User management
-router.get("/admin/list", adminRateLimit, getAllUsersController);
-router.get("/admin/deleted", adminRateLimit, getDeletedUsersController);
-router.post("/admin/create", adminRateLimit, createUserController);
-
-// CSV operations
+// POST /api/users - Create new user
 router.post(
-  "/admin/import",
-  uploadRateLimit,
-  uploadCSVSingle,
-  handleUploadError,
-  importAlumniFromCSVController
-);
-router.post(
-  "/admin/validate-csv",
-  uploadRateLimit,
-  uploadCSVSingle,
-  handleUploadError,
-  validateCSVTemplateController
-);
-
-// User role & status management
-router.put("/admin/:id/role", adminRateLimit, updateUserRoleController);
-router.put("/admin/:id/restore", adminRateLimit, restoreUserController);
-router.delete("/admin/:id", adminRateLimit, softDeleteUserController);
-
-// Admin profile update (acting on a specific user)
-router.patch(
-  "/admin/:id/profile",
+  "/",
   adminRateLimit,
-  updateUserProfileByAdminController
+  validateRequest(createUserSchema),
+  createUserController
 );
+
+// DELETE /api/users/:id - Soft delete user
+router.delete("/:id", adminRateLimit, softDeleteUserController);
 
 export default router;

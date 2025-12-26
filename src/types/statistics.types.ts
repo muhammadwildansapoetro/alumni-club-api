@@ -189,7 +189,7 @@ export const alumniSearchPublicSchema = z.object({
     "BANKING",
     "INSURANCE",
   ]).optional(),
-  employmentLevel: z.enum([
+  jobLevel: z.enum([
     "INTERN",
     "STAFF",
     "SUPERVISOR",
@@ -350,7 +350,7 @@ export interface AlumniSearchPublicResponse {
     industry?: string;
     jobTitle?: string;
     companyName?: string;
-    employmentLevel?: string;
+    jobLevel?: string;
   }>;
   pagination: {
     currentPage: number;
@@ -367,7 +367,7 @@ export interface AlumniSearchPublicResponse {
     classYearTo?: number;
     city?: string;
     industry?: string;
-    employmentLevel?: string;
+    jobLevel?: string;
   };
 }
 

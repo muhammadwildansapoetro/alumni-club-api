@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-// Create user schema (admin only)
+// ============================================
+// CREATE USER SCHEMA (Admin only)
+// ============================================
 export const createUserSchema = z.object({
   email: z
     .string()
@@ -10,8 +12,10 @@ export const createUserSchema = z.object({
     .string()
     .min(1, "Nama wajib diisi")
     .max(100, "Nama maksimal 100 karakter"),
-  password: z.string().min(8, "Password minimal 8 karakter").optional(),
   role: z.enum(["USER", "ADMIN"]).default("USER"),
+  npm: z
+    .string()
+    .regex(/^\d{1,13}$/, "NPM hanya boleh berisi angka maksimal 13 digit"),
   department: z.enum(["TEP", "TPN", "TIN"], {
     message: "Department harus salah satu dari: TEP, TPN, TIN",
   }),
@@ -26,18 +30,84 @@ export const createUserSchema = z.object({
   fullName: z.string().optional(),
 });
 
-// Update user profile schema
-export const updateUserProfileSchema = z.object({
-  email: z
+// ============================================
+// USER LIST QUERY PARAMETERS (with search and filter)
+// ============================================
+export const userListQuerySchema = z.object({
+  page: z
     .string()
-    .email("Format email tidak valid")
-    .min(1, "Email wajib diisi")
-    .optional(),
-  name: z
+    .regex(/^\d+$/, "Page harus berupa angka")
+    .default("1")
+    .transform(Number),
+  limit: z
     .string()
-    .min(1, "Nama wajib diisi")
-    .max(100, "Nama maksimal 100 karakter")
+    .regex(/^\d+$/, "Limit harus berupa angka")
+    .default("10")
+    .transform(Number),
+  // Search by name, email, or fullName
+  search: z.string().max(100, "Search query maksimal 100 karakter").optional(),
+  // Filter by department
+  department: z.enum(["TEP", "TPN", "TIN"]).optional(),
+  // Filter by class year
+  classYear: z
+    .string()
+    .regex(/^\d+$/, "Class year harus berupa angka")
+    .transform(Number)
     .optional(),
+  // Filter by location (ID only)
+  cityId: z
+    .string()
+    .regex(/^\d+$/, "City ID harus berupa angka")
+    .transform(Number)
+    .optional(),
+  provinceId: z
+    .string()
+    .regex(/^\d+$/, "Province ID harus berupa angka")
+    .transform(Number)
+    .optional(),
+  countryId: z
+    .string()
+    .regex(/^\d+$/, "Country ID harus berupa angka")
+    .transform(Number)
+    .optional(),
+  // Filter by industry
+  industry: z
+    .enum([
+      "AGRICULTURE",
+      "FOOD_TECH",
+      "BIOTECH",
+      "RESEARCH",
+      "EDUCATION",
+      "ENGINEERING",
+      "BUSINESS",
+      "MARKETING",
+      "FINANCE",
+      "GOVERNMENT",
+      "FREELANCE",
+      "OTHER",
+    ])
+    .optional(),
+  // Filter by job level
+  jobLevel: z
+    .enum([
+      "INTERN",
+      "STAFF",
+      "SUPERVISOR",
+      "MANAGER",
+      "SENIOR_MANAGER",
+      "DIRECTOR",
+      "VP",
+      "C_LEVEL",
+      "FOUNDER",
+      "OTHER",
+    ])
+    .optional(),
+});
+
+// ============================================
+// UPDATE PROFILE SCHEMA (Authenticated users)
+// ============================================
+export const updateProfileSchema = z.object({
   profile: z
     .object({
       fullName: z
@@ -45,7 +115,15 @@ export const updateUserProfileSchema = z.object({
         .min(1, "Nama lengkap wajib diisi")
         .max(100, "Nama lengkap maksimal 100 karakter")
         .optional(),
-      city: z.string().max(100, "Kota maksimal 100 karakter").optional(),
+      cityId: z.number().int().optional(),
+      cityName: z.string().max(100, "Kota maksimal 100 karakter").optional(),
+      provinceId: z.number().int().optional(),
+      provinceName: z
+        .string()
+        .max(100, "Provinsi maksimal 100 karakter")
+        .optional(),
+      countryId: z.number().int().optional(),
+      countryName: z.string().max(100, "Negara maksimal 100 karakter").optional(),
       industry: z
         .enum([
           "AGRICULTURE",
@@ -62,7 +140,7 @@ export const updateUserProfileSchema = z.object({
           "OTHER",
         ])
         .optional(),
-      employmentLevel: z
+      jobLevel: z
         .enum([
           "INTERN",
           "STAFF",
@@ -93,96 +171,34 @@ export const updateUserProfileSchema = z.object({
         .string()
         .max(100, "Nama perusahaan maksimal 100 karakter")
         .optional(),
-      linkedInUrl: z.string().url("Format URL LinkedIn tidak valid").optional(),
+      linkedInUrl: z
+        .string()
+        .url("Format URL LinkedIn tidak valid")
+        .optional(),
+      graduationYear: z
+        .number()
+        .int("Tahun wisuda harus berupa angka bulat")
+        .min(1960, "Tahun wisuda tidak valid")
+        .max(
+          new Date().getFullYear() + 5,
+          "Tahun wisuda tidak valid"
+        )
+        .optional(),
+      highestEducation: z
+        .enum(["MASTER", "DOCTOR"], {
+          message: "Pendidikan lanjutan harus salah satu dari: MASTER, DOCTOR",
+        })
+        .nullable()
+        .optional(),
     })
-    .optional(),
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "Minimal satu field profile harus diisi",
+    }),
 });
 
-// Update password schema
-export const updatePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Password saat ini wajib diisi"),
-  newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
-});
-
-// Update password schema (admin version - current password optional)
-export const updatePasswordAdminSchema = z.object({
-  currentPassword: z.string().optional(),
-  newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
-});
-
-// Update user role schema (admin only)
-export const updateUserRoleSchema = z.object({
-  role: z.enum(["USER", "ADMIN"], {
-    message: "Role harus USER atau ADMIN",
-  }),
-});
-
-// Query parameters for pagination
-export const paginationSchema = z.object({
-  page: z
-    .string()
-    .regex(/^\d+$/, "Page harus berupa angka")
-    .default("1")
-    .transform(Number),
-  limit: z
-    .string()
-    .regex(/^\d+$/, "Limit harus berupa angka")
-    .default("10")
-    .transform(Number),
-});
-
-// Query parameters for alumni directory
-export const alumniDirectoryQuerySchema = paginationSchema.extend({
-  department: z.enum(["TEP", "TPN", "TIN"]).optional(),
-  classYear: z
-    .string()
-    .regex(/^\d+$/, "Class year harus berupa angka")
-    .transform(Number)
-    .optional(),
-  city: z.string().optional(),
-  industry: z
-    .enum([
-      "AGRICULTURE",
-      "FOOD_TECH",
-      "BIOTECH",
-      "RESEARCH",
-      "EDUCATION",
-      "ENGINEERING",
-      "BUSINESS",
-      "MARKETING",
-      "FINANCE",
-      "GOVERNMENT",
-      "FREELANCE",
-      "OTHER",
-    ])
-    .optional(),
-  search: z.string().max(100, "Search query maksimal 100 karakter").optional(),
-});
-
-// CSV import template
-export const csvImportTemplate = {
-  requiredFields: ["email", "name", "department", "classYear"],
-  optionalFields: ["fullName", "password", "role"],
-  example: {
-    email: "john@example.com",
-    name: "John Doe",
-    department: "TEP",
-    classYear: "2020",
-    fullName: "John Doe",
-    password: "password123",
-    role: "USER",
-  },
-  departments: ["TEP", "TPN", "TIN"],
-  roles: ["USER", "ADMIN"],
-};
-
-// Response types
+// ============================================
+// INPUT TYPES
+// ============================================
 export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type UpdateUserProfileInput = z.infer<typeof updateUserProfileSchema>;
-export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;
-export type UpdatePasswordAdminInput = z.infer<
-  typeof updatePasswordAdminSchema
->;
-export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
-export type PaginationQuery = z.infer<typeof paginationSchema>;
-export type AlumniDirectoryQuery = z.infer<typeof alumniDirectoryQuerySchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type UserListQuery = z.infer<typeof userListQuerySchema>;
