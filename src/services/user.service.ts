@@ -1,9 +1,6 @@
 import { prisma } from "../lib/prisma.ts";
 import type { UserRole } from "../../generated/prisma/index.js";
 
-// ============================================
-// CREATE USER (Admin only)
-// ============================================
 export const createUserService = async (data: {
   email: string;
   name: string;
@@ -50,9 +47,6 @@ export const createUserService = async (data: {
   return result;
 };
 
-// ============================================
-// GET ALL USERS (All authenticated users)
-// ============================================
 export const getAllUsersService = async (
   page: number = 1,
   limit: number = 10,
@@ -63,7 +57,8 @@ export const getAllUsersService = async (
   provinceId?: number,
   countryId?: number,
   industry?: string,
-  jobLevel?: string
+  jobLevel?: string,
+  status?: string
 ) => {
   const skip = (page - 1) * limit;
 
@@ -82,6 +77,7 @@ export const getAllUsersService = async (
   if (countryId) profileFilter.countryId = countryId;
   if (industry) profileFilter.industry = industry;
   if (jobLevel) profileFilter.jobLevel = jobLevel;
+  if (status) profileFilter.status = status;
 
   // Apply profile filter if any exists
   if (Object.keys(profileFilter).length > 0) {
@@ -130,6 +126,7 @@ export const getAllUsersService = async (
             jobTitle: true,
             companyName: true,
             linkedInUrl: true,
+            status: true,
           },
         },
         createdAt: true,
@@ -151,9 +148,6 @@ export const getAllUsersService = async (
   };
 };
 
-// ============================================
-// GET USER BY ID (All authenticated users)
-// ============================================
 export const getUserByIdService = async (userId: string) => {
   const user = await prisma.user.findFirst({
     where: {
@@ -169,6 +163,7 @@ export const getUserByIdService = async (userId: string) => {
         select: {
           id: true,
           fullName: true,
+          npm: true,
           department: true,
           classYear: true,
           graduationYear: true,
@@ -185,6 +180,7 @@ export const getUserByIdService = async (userId: string) => {
           jobTitle: true,
           companyName: true,
           linkedInUrl: true,
+          status: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -201,9 +197,6 @@ export const getUserByIdService = async (userId: string) => {
   return user;
 };
 
-// ============================================
-// UPDATE OWN PROFILE (Authenticated users)
-// ============================================
 export const updateOwnProfileService = async (
   userId: string,
   profileData: {
@@ -222,6 +215,7 @@ export const updateOwnProfileService = async (
     linkedInUrl?: string;
     graduationYear?: number;
     highestEducation?: any;
+    status?: any;
   }
 ) => {
   // Check user exists
@@ -261,6 +255,7 @@ export const updateOwnProfileService = async (
       jobTitle: true,
       companyName: true,
       linkedInUrl: true,
+      status: true,
       updatedAt: true,
     },
   });
@@ -268,9 +263,6 @@ export const updateOwnProfileService = async (
   return updatedProfile;
 };
 
-// ============================================
-// SOFT DELETE USER (Admin only)
-// ============================================
 export const softDeleteUserService = async (
   userId: string,
   requestingUserId: string

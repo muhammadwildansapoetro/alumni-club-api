@@ -17,7 +17,10 @@ export const createBusinessListingController = async (
     const user = (req as AuthenticatedRequest).user;
     const businessData = req.body;
 
-    const businessListing = await createBusinessListingService(user.id, businessData);
+    const businessListing = await createBusinessListingService(
+      user.id,
+      businessData
+    );
 
     res.status(201).json({
       success: true,
@@ -45,8 +48,10 @@ export const getAllBusinessListingsController = async (
     const search = req.query.search as string;
     const category = req.query.category as string;
     const location = req.query.location as string;
-    const isActive = req.query.isActive !== undefined ?
-      req.query.isActive === "true" : undefined;
+    const isActive =
+      req.query.isActive !== undefined
+        ? req.query.isActive === "true"
+        : undefined;
 
     const result = await getAllBusinessListingsService(
       page,

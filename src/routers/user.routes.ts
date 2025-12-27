@@ -9,6 +9,7 @@ import {
   getUserByIdController,
   updateOwnProfileController,
   softDeleteUserController,
+  getMyProfileController,
 } from "../controllers/user.controller.js";
 import {
   createUserSchema,
@@ -27,8 +28,7 @@ router.get(
   getAllUsersController
 );
 
-// GET /api/users/:id - View user by ID (all fields, frontend handles visibility)
-router.get("/:id", getUserByIdController);
+router.get("/me", getMyProfileController);
 
 // PATCH /api/users/profile - Update own profile
 router.patch(
@@ -39,6 +39,9 @@ router.patch(
 
 // Apply admin middleware to all following routes
 router.use(adminMiddleware);
+
+// GET /api/users/:id - View user by ID (all fields, frontend handles visibility)
+router.get("/:id", getUserByIdController);
 
 // POST /api/users - Create new user
 router.post(

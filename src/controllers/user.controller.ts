@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, RequestHandler, Response } from "express";
 import type { AuthenticatedRequest } from "../types/express.types.js";
 import {
   createUserService,
@@ -8,9 +8,6 @@ import {
   softDeleteUserService,
 } from "../services/user.service.js";
 
-// ============================================
-// CREATE USER (Admin only)
-// ============================================
 export const createUserController = async (req: Request, res: Response) => {
   try {
     const { email, name, role, npm, department, classYear, fullName } =
@@ -67,6 +64,7 @@ export const getAllUsersController = async (req: Request, res: Response) => {
       : undefined;
     const industry = req.query.industry as string;
     const jobLevel = req.query.jobLevel as string;
+    const status = req.query.status as string;
 
     const result = await getAllUsersService(
       page,
@@ -78,7 +76,8 @@ export const getAllUsersController = async (req: Request, res: Response) => {
       provinceId,
       countryId,
       industry,
-      jobLevel
+      jobLevel,
+      status
     );
 
     res.json({
@@ -198,4 +197,15 @@ export const softDeleteUserController = async (req: Request, res: Response) => {
         error instanceof Error ? error.message : "Terjadi kesalahan internal",
     });
   }
+};
+
+export const getMyProfileController: RequestHandler = async (req, res) => {
+  const userId = req.user!.id;
+
+  const result = await getUserByIdService(userId);
+
+  res.json({
+    success: true,
+    data: result,
+  });
 };

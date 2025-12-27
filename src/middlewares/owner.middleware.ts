@@ -3,7 +3,7 @@ import type { AuthenticatedRequest } from "../types/express.types.js";
 import { prisma } from "../lib/prisma.ts";
 
 // Factory function to create owner middleware for different resources
-export const createOwnerMiddleware = (resourceType: 'job' | 'business') => {
+export const createOwnerMiddleware = (resourceType: "job" | "business") => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
@@ -29,18 +29,18 @@ export const createOwnerMiddleware = (resourceType: 'job' | 'business') => {
       }
 
       let resource;
-      if (resourceType === 'job') {
+      if (resourceType === "job") {
         resource = await prisma.jobs.findFirst({
           where: {
             id,
-            userId: user.id
+            userId: user.id,
           },
         });
-      } else if (resourceType === 'business') {
+      } else if (resourceType === "business") {
         resource = await prisma.business.findFirst({
           where: {
             id,
-            userId: user.id
+            userId: user.id,
           },
         });
       }
@@ -48,7 +48,8 @@ export const createOwnerMiddleware = (resourceType: 'job' | 'business') => {
       if (!resource) {
         return res.status(403).json({
           success: false,
-          error: "Akses ditolak - Anda hanya dapat mengubah resource yang Anda buat",
+          error:
+            "Akses ditolak - Anda hanya dapat mengubah resource yang Anda buat",
         });
       }
 
@@ -63,5 +64,5 @@ export const createOwnerMiddleware = (resourceType: 'job' | 'business') => {
   };
 };
 
-export const jobOwnerMiddleware = createOwnerMiddleware('job');
-export const businessOwnerMiddleware = createOwnerMiddleware('business');
+export const jobOwnerMiddleware = createOwnerMiddleware("job");
+export const businessOwnerMiddleware = createOwnerMiddleware("business");

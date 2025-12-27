@@ -12,14 +12,14 @@ export const adminMiddleware = (
   if (!user) {
     return res.status(401).json({
       success: false,
-      error: "Tidak terautentikasi - Pengguna tidak ditemukan"
+      error: "Tidak terautentikasi - Pengguna tidak ditemukan",
     });
   }
 
   if (user.role !== UserRole.ADMIN) {
     return res.status(403).json({
       success: false,
-      error: "Akses ditolak - Diperlukan hak akses admin"
+      error: "Akses ditolak - Diperlukan hak akses admin",
     });
   }
 

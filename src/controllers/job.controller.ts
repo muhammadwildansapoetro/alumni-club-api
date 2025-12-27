@@ -46,8 +46,10 @@ export const getAllJobPostingsController = async (
     const location = req.query.location as string;
     const jobType = req.query.jobType as string;
     const company = req.query.company as string;
-    const isActive = req.query.isActive !== undefined ?
-      req.query.isActive === "true" : undefined;
+    const isActive =
+      req.query.isActive !== undefined
+        ? req.query.isActive === "true"
+        : undefined;
 
     const result = await getAllJobPostingsService(
       page,

@@ -102,6 +102,10 @@ export const userListQuerySchema = z.object({
       "OTHER",
     ])
     .optional(),
+  // Filter by status
+  status: z
+    .enum(["WORKING", "STUDYING", "WORKING_STUDYING", "ENTREPRENEUR", "NOT_WORKING"])
+    .optional(),
 });
 
 // ============================================
@@ -187,6 +191,12 @@ export const updateProfileSchema = z.object({
       highestEducation: z
         .enum(["MASTER", "DOCTOR"], {
           message: "Pendidikan lanjutan harus salah satu dari: MASTER, DOCTOR",
+        })
+        .nullable()
+        .optional(),
+      status: z
+        .enum(["WORKING", "STUDYING", "WORKING_STUDYING", "ENTREPRENEUR", "NOT_WORKING"], {
+          message: "Status harus salah satu dari: WORKING, STUDYING, WORKING_STUDYING, ENTREPRENEUR, NOT_WORKING",
         })
         .nullable()
         .optional(),

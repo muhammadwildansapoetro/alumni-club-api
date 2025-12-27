@@ -17,6 +17,8 @@ import type {
   ResetPasswordInput,
   ChangePasswordInput,
 } from "../types/auth.types.js";
+import jwt from "jsonwebtoken";
+import { signAccessToken } from "../utils/token.js";
 
 export const registerController = async (req: Request, res: Response) => {
   try {
@@ -48,12 +50,22 @@ export const loginController = async (req: Request, res: Response) => {
 
     const result = await loginService(email, password);
 
-    res.cookie("access_token", result.token, {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("access_token", result.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/",
       maxAge: 1000 * 60 * 15,
+    });
+
+    res.cookie("refresh_token", result.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
     return res.json({
@@ -67,6 +79,40 @@ export const loginController = async (req: Request, res: Response) => {
       success: false,
       message: error.message || "Login gagal. Silakan coba lagi.",
     });
+  }
+};
+
+export const refreshController = (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refresh_token;
+
+  if (!refreshToken) {
+    return res.status(401).json({ success: false });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as { id: string; role: string };
+
+    const newAccessToken = signAccessToken({
+      id: decoded.id,
+      role: decoded.role,
+    });
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("access_token", newAccessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+      maxAge: 1000 * 60 * 15,
+    });
+
+    res.json({ success: true });
+  } catch {
+    return res.status(401).json({ success: false });
   }
 };
 

@@ -1,17 +1,15 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { decrypt } from "../lib/encryption.js";
 import type { AuthenticatedRequest, UserRole } from "../types/express.types.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret123";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const authMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const token =
-    req.cookies?.access_token || req.headers.authorization?.split(" ")[1];
+  const token = req.cookies?.access_token;
 
   if (!token) {
     return res.status(401).json({
@@ -20,13 +18,16 @@ export const authMiddleware = (
     });
   }
 
-  try {
-    let decryptedToken = token;
-    try {
-      decryptedToken = decrypt(token);
-    } catch (decryptError) {}
+  if (!JWT_SECRET) {
+    console.error("JWT_SECRET is missing");
+    return res.status(500).json({
+      success: false,
+      error: "Server misconfiguration",
+    });
+  }
 
-    const decoded = jwt.verify(decryptedToken, JWT_SECRET) as {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET!) as {
       id: string;
       email: string;
       role: string;
@@ -40,9 +41,11 @@ export const authMiddleware = (
 
     next();
   } catch (err) {
+    console.error("JWT verify failed:", err);
+
     return res.status(401).json({
       success: false,
-      error: "Token tidak valid",
+      error: "Token tidak valid atau kadaluarsa",
     });
   }
 };

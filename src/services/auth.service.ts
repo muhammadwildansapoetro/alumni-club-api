@@ -13,6 +13,7 @@ import {
   sendPasswordResetEmail,
   sendWelcomeEmail,
 } from "./email.service.js";
+import { signAccessToken, signRefreshToken } from "../utils/token.js";
 
 // JWT Configuration
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -100,27 +101,12 @@ export const loginService = async (email: string, password: string) => {
     include: { profile: true },
   });
 
-  if (!user) {
+  if (!user || !user.password) {
     throw new Error("Email atau password tidak valid.");
   }
 
-  // Check if user has password
-  if (!user.password) {
-    throw new Error(
-      "Password tidak ditemukan. Silakan login dengan Google atau reset password Anda."
-    );
-  }
-
-  // Check if email is verified
   if (!user.emailVerified) {
-    throw new Error(
-      "Email Anda belum diverifikasi. Silakan periksa email Anda atau minta verifikasi ulang."
-    );
-  }
-
-  // Check if password exists and compare
-  if (!user.password) {
-    throw new Error("Password tidak ditemukan. Silakan reset password Anda.");
+    throw new Error("Email Anda belum diverifikasi.");
   }
 
   const isPasswordValid = await comparePassword(password, user.password);
@@ -128,20 +114,22 @@ export const loginService = async (email: string, password: string) => {
     throw new Error("Email atau password tidak valid.");
   }
 
-  // Generate JWT token
-  const rawToken = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      authMethod: user.authMethod,
-    },
-    JWT_SECRET!,
-    { expiresIn: JWT_EXPIRES }
-  );
+  const payload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    authMethod: user.authMethod,
+  };
 
-  // Encrypt token for secure transmission
-  const encryptedToken = encrypt(rawToken);
+  const accessToken = signAccessToken({
+    id: user.id,
+    role: user.role,
+  });
+
+  const refreshToken = signRefreshToken({
+    id: user.id,
+    role: user.role,
+  });
 
   return {
     user: {
@@ -152,7 +140,8 @@ export const loginService = async (email: string, password: string) => {
       authMethod: user.authMethod,
       profile: user.profile,
     },
-    token: encryptedToken,
+    accessToken,
+    refreshToken,
   };
 };
 

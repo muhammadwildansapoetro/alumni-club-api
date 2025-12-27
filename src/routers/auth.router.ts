@@ -8,6 +8,7 @@ import {
   forgotPasswordController,
   resetPasswordController,
   changePasswordController,
+  refreshController,
 } from "../controllers/auth.controller.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
@@ -29,12 +30,11 @@ authRouter.post(
 );
 authRouter.post("/login", validateRequest(loginSchema), loginController);
 
+authRouter.post("/refresh", refreshController);
+
 authRouter.post("/logout", (_req, res) => {
-  res.clearCookie("access_token", {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-  });
+  res.clearCookie("access_token", { path: "/" });
+  res.clearCookie("refresh_token", { path: "/auth/refresh" });
 
   res.json({ success: true, message: "Logout berhasil" });
 });
